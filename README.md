@@ -1,0 +1,1 @@
+Library to perform distributed block matrix operations using actor model with Akka

@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matrix-choreography-seed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: matrix-choreography-seed
+  template:
+    metadata:
+      labels:
+        component: matrix-choreography-seed
+    spec:
+      containers:
+        - name: matrix-choreography-seed
+          image: matrix-choreography:1.0.30
+          command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
+          #command: [ "/bin/bash", "-c", "--" ]
+          #args: [ "while true; do sleep 30; done;" ]
+          ports:
+            - containerPort: 2000
+            - containerPort: 2222
+            - containerPort: 5149
+          env:
+            - name: EXTERNAL_POD_IP
+              value: "$(MATRIX_CHOREOGRAPHY_SEED_SERVICE_HOST)"
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SEED_DOMAIN
+              value: "$(MATRIX_CHOREOGRAPHY_SEED_SERVICE_HOST)"
+            - name: SEED_PORT
+              value: "5149"
+          terminationMessagePolicy: FallbackToLogsOnError
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: matrix-choreography-seed
+spec:
+  ports:
+    - name: api
+      port: 2001
+      targetPort: 2000
+    - name: actor
+      port: 5149
+      targetPort: 5149
+    - name: management
+      port: 2222
+      targetPort: 2222
+  selector:
+    component: matrix-choreography-seed
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+
+#---
+#
+#
+#kind: Deployment
+#apiVersion: extensions/v1beta1
+#metadata:
+#  name: matrix-choreography
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      component: matrix-choreography
+#  template:
+#    metadata:
+#      labels:
+#        component: matrix-choreography
+#    spec:
+#      containers:
+#        - name: matrix-choreography
+#          image: matrix-choreography:1.0.25
+#          command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
+#          ports:
+#            - containerPort: 2000
+#            - containerPort: 2222
+#            - containerPort: 5149
+#          env:
+#            - name: EXTERNAL_POD_IP
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: status.podIP
+#            - name: MY_POD_IP
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: status.podIP
+#            - name: SEED_DOMAIN
+#              value: "$(MATRIX_CHOREOGRAPHY_SEED_SERVICE_HOST)"
+#            - name: SEED_PORT
+#              value: "5149"
+#          terminationMessagePolicy: FallbackToLogsOnError

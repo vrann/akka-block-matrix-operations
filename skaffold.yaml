@@ -1,0 +1,9 @@
+apiVersion: skaffold/v1beta15
+kind: Config
+build:
+  artifacts:
+    - image: matrix-choreography
+deploy:
+  kubectl:
+    manifests:
+      - kubernetes.yaml
