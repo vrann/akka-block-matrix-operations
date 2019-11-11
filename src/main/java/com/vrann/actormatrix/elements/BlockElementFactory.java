@@ -1,14 +1,27 @@
 package com.vrann.actormatrix.elements;
 
 import akka.actor.ActorRef;
+import akka.event.LoggingAdapter;
 import com.vrann.actormatrix.Position;
+import com.vrann.actormatrix.handler.A11ReadyHander;
+import com.vrann.dataformat.UnformattedMatrixReader;
+import com.vrann.dataformat.UnformattedMatrixWriter;
+import org.apache.spark.ml.linalg.DenseMatrix;
 
 public class BlockElementFactory {
 
-    private ActorRef mediator;
+    private final LoggingAdapter log;
+    private final ActorRef mediator;
+    private final int sectionId;
 
-    public BlockElementFactory(ActorRef mediator) {
+    public BlockElementFactory(
+            LoggingAdapter log,
+            ActorRef mediator,
+            int sectionId
+    ) {
+        this.log = log;
         this.mediator = mediator;
+        this.sectionId = sectionId;
     }
 
     //        log.info("Section coordinator started allocation of actors for section of {} actors", sectionPositions.size());
@@ -33,9 +46,22 @@ public class BlockElementFactory {
     {
         if (pos.getX() == pos.getY() && pos.getX() == 0) { // "first" block at 0,0 coordinates
             //return new FirstBlockElement(pos, mediator);
-            return new DiagonalBlockElement(pos, mediator);
+            return new DiagonalBlockElement(
+                    pos,
+                    mediator,
+                    new A11ReadyHander(
+                            log,
+                            mediator,
+                            sectionId
+                    )
+            );
         } else if (pos.getX() == pos.getY()) { //block on the diagonal of the matrix
-            return new DiagonalBlockElement(pos, mediator);
+            return new DiagonalBlockElement(pos, mediator,
+                    new A11ReadyHander(
+                            log,
+                            mediator,
+                            sectionId
+                    ));
         } else if (pos.getX() == 0) {
             //return new FirstColumnBlockElement(pos, mediator);
             return new SubdiagonalBlockElement(pos, mediator);

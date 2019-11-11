@@ -3,7 +3,6 @@ package com.vrann.actormatrix.handler;
 import akka.actor.ActorRef;
 import akka.cluster.pubsub.DistributedPubSubMediator;
 import akka.event.LoggingAdapter;
-import com.vrann.actormatrix.SectionCoordinator;
 import com.vrann.actormatrix.message.BlockMatrixDataAvailable;
 import com.vrann.actormatrix.message.FileTransferReady;
 import com.vrann.dataformat.*;
@@ -14,28 +13,18 @@ import com.vrann.blockedcholesky.operation.Factorization;
 import java.io.IOException;
 
 public class A11ReadyHander {
-
-    private ActorRef selfReference;
-    private LoggingAdapter log;
-    private ActorRef mediator;
-    private SectionCoordinator sectionCoordinator;
-    UnformattedMatrixReader<DenseMatrix> reader;
-    UnformattedMatrixWriter<DenseMatrix> writer;
+    private final LoggingAdapter log;
+    private final ActorRef mediator;
+    private final int sectionId;
 
     public A11ReadyHander(
-          ActorRef selfReference,
           LoggingAdapter log,
           ActorRef mediator,
-          SectionCoordinator sectionCoordinator,
-          UnformattedMatrixReader<DenseMatrix> reader,
-          UnformattedMatrixWriter<DenseMatrix> writer
+          int sectionId
     ) {
-        this.selfReference = selfReference;
         this.log = log;
         this.mediator = mediator;
-        this.sectionCoordinator = sectionCoordinator;
-        this.reader = reader;
-        this.writer = writer;
+        this.sectionId = sectionId;
     }
 
     /**
@@ -57,7 +46,8 @@ public class A11ReadyHander {
      */
     public void handle(
             BlockMatrixDataAvailable message,
-            Position actorPosition
+            Position actorPosition,
+            ActorRef selfReference
     ) throws IOException {
 
         //why should all matrix be passed as a message is it is on the disk already
@@ -75,7 +65,7 @@ public class A11ReadyHander {
                         || message.getMatrixType() == BlockMatrixType.A22
         ) {
             log.info("This is either first A(1, 1) diagonal block or any other " +
-                            "A(N, N) diagonal block which was already calculated",
+                            "A(N, N) diagonal block which was already calculated {} {}",
                     message.getPosition().getX(), message.getPosition().getY());
 
             log.info("Received A11Ready message");
@@ -100,13 +90,18 @@ public class A11ReadyHander {
                         FileTransferReady.message(
                                 message.getPosition(),
                                 BlockMatrixType.L11,
-                                MatrixTypePositionFileLocator.getFile(message.getPosition(), BlockMatrixType.L11).toString(),
-                                sectionCoordinator.getSectionId())
+                                MatrixTypePositionFileLocator
+                                        .getFile(
+                                                message.getPosition(),
+                                                BlockMatrixType.L11
+                                        ).toString(),
+                                sectionId)
                         ), selfReference
                 );
 
             } catch (IOException exception) {
-                log.error("File for the matrix block is not found {}", exception.getMessage());
+                log.error("File for the matrix block is not found {} in section {}",
+                        exception.getMessage(), sectionId);
                 throw new IOException("File for the matrix block is not found", exception);
             }
         }

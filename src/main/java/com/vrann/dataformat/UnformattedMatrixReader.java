@@ -38,6 +38,7 @@ public class UnformattedMatrixReader<T extends Matrix> {
     public static <L extends Matrix> UnformattedMatrixReader<L> ofFileLocator(
             FileLocator fileLocator, Position position, BlockMatrixType matrixType) throws FileNotFoundException {
         File file = fileLocator.getFile(position, matrixType);
+        System.out.println(file.getPath());
         return ofFile(file);
     }
 

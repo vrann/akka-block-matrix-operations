@@ -50,11 +50,6 @@
             <artifactId>akka-management-cluster-http_2.12</artifactId>
             <version>1.0.3</version>
         </dependency>
-        <dependency>
-            <groupId>com.lightbend.akka.management</groupId>
-            <artifactId>akka-management_2.12</artifactId>
-            <version>1.0.3</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-mllib -->
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -93,6 +88,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -104,7 +100,7 @@
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <overWriteIfNewer>false</overWriteIfNewer>
                         </configuration>
                     </execution>
                 </executions>

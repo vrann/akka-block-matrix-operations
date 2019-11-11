@@ -1,7 +1,9 @@
 package com.vrann.actormatrix;
 
+import java.io.File;
 import java.nio.file.Path;
 
+@FunctionalInterface
 public interface FileLocator {
-    Path getMatrixBlockFilePath(String filename);
+    File getMatrixBlockFilePath(String filename);
 }

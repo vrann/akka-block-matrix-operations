@@ -3,6 +3,7 @@ package com.vrann.actormatrix.handler;
 import akka.actor.ActorRef;
 import akka.cluster.pubsub.DistributedPubSubMediator;
 import akka.event.LoggingAdapter;
+import com.vrann.actormatrix.FileLocator;
 import com.vrann.actormatrix.message.BlockMatrixDataAvailable;
 import com.vrann.actormatrix.message.FileTransferReady;
 import com.vrann.actormatrix.message.FileTransferRequest;
@@ -11,13 +12,16 @@ import java.io.IOException;
 
 public class FileTransferReadyHandler implements SectionMessageHandler<FileTransferReady> {
 
+    private FileLocator fileLocator;
     private ActorRef mediator;
     private LoggingAdapter log;
 
     public FileTransferReadyHandler(
             LoggingAdapter log,
-            ActorRef mediator
+            ActorRef mediator,
+            FileLocator fileLocator
     ) {
+        this.fileLocator = fileLocator;
         this.mediator = mediator;
         this.log = log;
     }
@@ -42,9 +46,9 @@ public class FileTransferReadyHandler implements SectionMessageHandler<FileTrans
                                     message.getSourceSectionId())),
                     selfReference);
         } else {
-            final File file = new File(message.getFileName());
+            final File file = fileLocator.getMatrixBlockFilePath(message.getFileName());
             if (!file.exists()) {
-                log.error("File for the matrix block is not found {}", file);
+                log.error("File for the matrix block is not found {}", file.getAbsolutePath());
                 throw new IOException("File for the matrix block is not found");
             }
             BlockMatrixDataAvailable resultMessage = new BlockMatrixDataAvailable.Builder()

@@ -60,7 +60,7 @@ public class FileTransferSenderActor extends AbstractActor {
         return receiveBuilder()
                 .match(
                     FileTransferRequest.class,
-                    message -> handler.handle(message, sender()))
+                    message -> handler.handle(message, sender(), self()))
                 .match(
                     DistributedPubSubMediator.SubscribeAck.class,
                     message -> log.info("subscribed to topic {}", message.subscribe().topic()))

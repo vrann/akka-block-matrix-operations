@@ -1,7 +1,12 @@
 package com.vrann.blockedcholesky.operation;
 
+import com.vrann.actormatrix.Position;
+import com.vrann.dataformat.DenseMatrixFactory;
+import com.vrann.dataformat.UnformattedMatrixReader;
 import org.apache.spark.ml.linalg.DenseMatrix;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,28 +46,37 @@ class FactorizationTest {
                 11, -4, 17,      28, -32, 21,   -33, 41, 29
         });
 
-        System.out.println(A.toString());
-        System.out.println(Factorization.apply(A).toString());
-
-        double[] res = Factorization.apply(A).values();
-        System.out.println(res[30]);
-        System.out.println(res[31]);
-        System.out.println(res[32]);
-
-        System.out.println(res[39]);
-        System.out.println(res[40]);
-        System.out.println(res[41]);
-
-        System.out.println(res[48]);
-        System.out.println(res[49]);
-        System.out.println(res[50]);
-
-        A = new DenseMatrix(4, 4, new double[]{
-            7,  3, -1,  2,
-            3,  8,  1, -4,
-            -1,  1,  4, -1,
-            2, -4, -1,  6
-        });
-        System.out.println(Factorization.apply(A));
+//        A = UnformattedMatrixReader
+//                .<DenseMatrix>ofFileLocator(
+//                        (Position.fromCoordinates(0, 0), BlockMatrixType.aMN) -> new File(
+//                                this.getClass().getResource(
+//                                    String.format("/test/matrix-aMN-0-0.bin")
+//                                ).getPath()
+//                        ), 0, 0, BlockMatrixType.aMN)
+//                .readMatrix(new DenseMatrixFactory());
+//
+//        System.out.println(A.toString());
+//        System.out.println(Factorization.apply(A).toString());
+//
+//        double[] res = Factorization.apply(A).values();
+//        System.out.println(res[30]);
+//        System.out.println(res[31]);
+//        System.out.println(res[32]);
+//
+//        System.out.println(res[39]);
+//        System.out.println(res[40]);
+//        System.out.println(res[41]);
+//
+//        System.out.println(res[48]);
+//        System.out.println(res[49]);
+//        System.out.println(res[50]);
+//
+//        A = new DenseMatrix(4, 4, new double[]{
+//            7,  3, -1,  2,
+//            3,  8,  1, -4,
+//            -1,  1,  4, -1,
+//            2, -4, -1,  6
+//        });
+//        System.out.println(Factorization.apply(A));
     }
 }

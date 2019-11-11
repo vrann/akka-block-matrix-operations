@@ -16,30 +16,26 @@ import com.vrann.actormatrix.message.FileTransfer;
 import com.vrann.actormatrix.message.FileTransferRequest;
 import scala.concurrent.ExecutionContextExecutor;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.concurrent.CompletionStage;
 
 public class FileTransferRequestHandler implements MessageHandler<FileTransferRequest> {
 
     private FileLocator fileLocator;
-    private ActorRef mediator;
     private ActorMaterializer materializer;
     private LoggingAdapter log;
-    private ActorRef selfReference;
     private ExecutionContextExecutor dispatcher;
 
     public FileTransferRequestHandler(
         LoggingAdapter log,
-        ActorRef mediator,
         ActorMaterializer materializer,
         ExecutionContextExecutor dispatcher,
         FileLocator fileLocator
     ) {
         this.fileLocator = fileLocator;
-        this.mediator = mediator;
         this.materializer = materializer;
         this.log = log;
-        this.selfReference = selfReference;
         this.dispatcher = dispatcher;
     }
 
@@ -53,8 +49,8 @@ public class FileTransferRequestHandler implements MessageHandler<FileTransferRe
     public void handle(FileTransferRequest message, ActorRef sender, ActorRef selfReference)
     {
         log.info("Received request for file {}", message.getFileName());
-        final Path file = fileLocator.getMatrixBlockFilePath(message.getFileName());
-        Source<ByteString, CompletionStage<IOResult>> fileSource = FileIO.fromPath(file);
+        final File file = fileLocator.getMatrixBlockFilePath(message.getFileName());
+        Source<ByteString, CompletionStage<IOResult>> fileSource = FileIO.fromFile(file);
         CompletionStage<SourceRef<ByteString>> fileRef = fileSource.runWith(StreamRefs.sourceRef(), materializer);
 
         System.out.println(sender.path());

@@ -76,7 +76,7 @@ public class FileTransferHandler implements SectionMessageHandler<FileTransfer> 
         //test initiate fake transfer
         //if (coordinator.positions().contains(message.position)) {
         //if message sent to itself
-        final File file = fileLocator.getMatrixBlockFilePath(message.getFileName()).toFile();
+        final File file = fileLocator.getMatrixBlockFilePath(message.getFileName());
         Sink<ByteString, CompletionStage<IOResult>> fileSink = FileIO.toFile(file);
         message.getSourceRef().getSource().runWith(fileSink, materializer);
         log.info("File is written to path {}", file);

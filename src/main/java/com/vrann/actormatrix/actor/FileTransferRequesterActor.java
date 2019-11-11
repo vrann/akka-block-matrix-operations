@@ -58,10 +58,10 @@ public class FileTransferRequesterActor extends AbstractActor {
         this.fileTransferHandler = fileTransferHandler;
 
         log.info("Started FileTransferRequesterActor for section {}", sectionId);
+        log.info("Started FileTransferRequesterActor for section {}", sectionId);
 
         for (Position pos: coordinator.positions()) {
-            //this should be more specific, requesting the matrix for position
-            String topic = String.format("file-transfer-ready-%d-%d", pos.getX(), pos.getY());
+            String topic = FileTransferReady.getTopic(pos);
             log.info("Requesting subscription to {}", topic);
             log.info("Requesting subscription to {}", topic);
             mediator.tell(new DistributedPubSubMediator.Subscribe(topic, getSelf()), getSelf());
@@ -77,48 +77,14 @@ public class FileTransferRequesterActor extends AbstractActor {
                     System.out.printf("Received message FileTransferReady (%d, %d) %s %s\n",
                             message.getPosition().getX(), message.getPosition().getY(),
                             message.getMatrixType(), message.getFileName());
-                    fileTransferReadyHandler.handle(message, sectionId);
+                    fileTransferReadyHandler.handle(message, sectionId, getSelf());
                 }
         ).match(
                 FileTransfer.class, message -> {
                     System.out.printf("Received message FileTransfer (%d, %d) %s %s\n",
                             message.getPosition().getX(), message.getPosition().getY(),
                             message.getMatrixType(), message.getFileName());
-
-                    FileTransferHandler fileTransferHandler = new FileTransferHandler.Builder()
-                            .setFileLocator(new MatrixBlockFileLocator())
-                            .setLoger(log)
-                            .setMaterializer(materializer)
-                            .setMediator(mediator)
-                            .setSelfReference(getSelf())
-                            .build();
-
-                    fileTransferHandler.handle(message, sectionId);
-                    //}
-                    //if file is not expected
-//                    switch (message.matrixType) {
-//                        case A11:
-//                            //should only accept if current section "owns" it
-//                            //should file transfer be per section then? Why do we need it in block
-//                            //block receives ready message and should be able to read file and construct matrix
-//                            this.state.add(new BlockMatrixReceivedState(DiagonalBlockElementState.A11Received, message.position));
-//                            mediator.tell(A11Ready.instance(message.position.getX(), message.position.getY()), selfReference.getSelfInstance());
-//                            //we can pass section id by section coordinator knows it anyway by position
-//                            // does ready means that correct section received it
-//
-//                            //based on matrix type it should know what message to send
-//                            //matrix type and message types belongs to Cholesky domain (doesn't really makes sense in other matrices)
-//                            break;
-//                        case L21:
-//                            this.state.add(new BlockMatrixReceivedState(DiagonalBlockElementState.L21Received, message.position));
-//                            break;
-//                        case A22:
-//                            this.state.add(new BlockMatrixReceivedState(DiagonalBlockElementState.A22Received, message.position));
-//                            break;
-//                        case L11:
-//                            this.state.add(new BlockMatrixReceivedState(DiagonalBlockElementState.L11Received, message.position));
-//                            break;
-//                    }
+                    fileTransferHandler.handle(message, sectionId, getSelf());
                 }).match(DistributedPubSubMediator.SubscribeAck.class,
                     message -> log.info("subscribed to topic {}", message.subscribe().topic())
                 ).matchAny(message -> {

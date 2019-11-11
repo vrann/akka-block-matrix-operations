@@ -66,7 +66,8 @@ public class SectionCoordinator {
                 actorSystem,
                 new FileTransferReadyHandler(
                     log,
-                    mediator
+                    mediator,
+                    fileLocator
                 ),
                 new FileTransferHandler.Builder()
                         .setFileLocator(fileLocator)
@@ -76,20 +77,19 @@ public class SectionCoordinator {
                         .build(),
                 this,
                 sectionId
-        ), "FileTransfer");
+        ), "FileTransferRequesterActor");
 
         actorSystem.actorOf(FileTransferSenderActor.props(
                 materializer,
                 actorSystem,
                 new FileTransferRequestHandler(
                     log,
-                    mediator,
                     materializer,
                     actorSystem.dispatcher(),
                     fileLocator
                 ),
                 sectionId
-        ), "FileTransfer");
+        ), "FileTransferSenderActor");
     }
 
     public List<Position> positions() {

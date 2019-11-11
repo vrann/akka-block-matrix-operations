@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
@@ -58,20 +59,20 @@ class DiagonalBlockActorTest {
 
                 final ActorRef mediator = DistributedPubSub.get(system).mediator();
                 final SectionCoordinator sc = new SectionCoordinator(system, positions,
-                        new BlockElementFactory(mediator), materializer, 2);
+                        new BlockElementFactory(log, mediator, 2), mediator, materializer, 2);
 
                 final TestKit probe = new TestKit(system);
 
                 final ActorRef requester = system.actorOf(FileTransferRequesterActor.props(materializer, system,
                         //(FileTransferReady message, int sectionId) -> {},
-                        (FileTransferReady message, int sectionId) -> {
+                        (FileTransferReady message, int sectionId, ActorRef self) -> {
                             new FileTransferReadyHandler(
-                                    probe.getRef(),
-                                    log, mediator, materializer,
-                                    filename -> Path.of("", "")
-                            ).handle(message, sectionId);
+                                    log, mediator,
+                                    (fileName) -> new File(
+                                            this.getClass().getResource(String.format("/test/%s", fileName)).getPath())
+                            ).handle(message, sectionId, self);
                         },
-                        (FileTransfer message, int sectionId) -> {
+                        (FileTransfer message, int sectionId, ActorRef self) -> {
                             Sink<ByteString, CompletionStage<ByteString>> concatSink =
                                     Sink.fold(ByteString.fromString(""), (akk, entry) -> {akk = akk.concat(entry);
                                         System.out.printf("akk.utf8String() %s \n", akk.utf8String());
@@ -81,44 +82,17 @@ class DiagonalBlockActorTest {
                             message.getSourceRef().getSource().limit(100).to(concatSink).run(materializer);
                         }, sc, 1), "FileTransferRequesterActor");
 
-//                class ReceiverActor extends AbstractActor {
-//                    @Override
-//                    public Receive createReceive() {
-//                        return new ReceiveBuilder()
-//                                .match(FileTransferRequest.class, (message) -> {
-//                                    System.out.println(message);
-//                                })
-//                            .matchAny(System.out::println)
-//                            .build();
-//                    }
-//                }
-//
-//                final ActorRef receiver =  system.actorOf(
-//                        Props.create(ReceiverActor.class, ReceiverActor::new), "ReceiverActor"
-//                );
-
                 final ActorRef sender =  system.actorOf(
                         FileTransferSenderActor.props(materializer, system,
-                                (message, ref) -> new FileTransferRequestHandler(
-                                        probe.getRef(),
+                                (message, ref, self) -> new FileTransferRequestHandler(
                                         log,
-                                        mediator,
                                         materializer,
                                         system.dispatcher(),
-                                        (fileName) -> Path.of(this.getClass().getResource(String.format("/test/%s", fileName)).getPath())
-                                ).handle(message, probe.getRef())
-//                            (FileTransferRequest message, ActorRef ref) -> {
-//                                System.out.printf("Rceieved request FileTransferRequest %s %s %s \n",
-//                                        message.getFileName(), message.getMatrixType(), message.getSourceSectionId());
-//                                String path = this.getClass().getResource(
-//                                String.format("/test/%s", message.getFileName())).getPath();
-//                                System.out.println(path);
-//                            }
-                , 2), "FileTransferSenderActor");
-
-                //final ActorRef requester
-
-                //final ActorRef sender
+                                        (fileName) -> new File(
+                                                this.getClass().getResource(String.format("/test/%s", fileName))
+                                                        .getPath())
+                                ).handle(message, probe.getRef(), self),
+                                2), "FileTransferSenderActor");
 
                 requester.tell(new FileTransferReady(Position.fromCoordinates(0, 0), BlockMatrixType.aMN, "data-0-0.dat", 2), probe.getRef());
 

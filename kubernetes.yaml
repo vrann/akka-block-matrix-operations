@@ -14,10 +14,11 @@ spec:
     spec:
       containers:
         - name: matrix-choreography-seed
-          image: matrix-choreography:1.0.30
+          image: akka-matrix/matrix-choreography
           command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
-          #command: [ "/bin/bash", "-c", "--" ]
-          #args: [ "while true; do sleep 30; done;" ]
+          volumeMounts:
+            - name: choreography-setup
+              mountPath: /root/.actorchoreography
           ports:
             - containerPort: 2000
             - containerPort: 2222
@@ -34,6 +35,10 @@ spec:
             - name: SEED_PORT
               value: "5149"
           terminationMessagePolicy: FallbackToLogsOnError
+      volumes:
+        - name: choreography-setup
+          hostPath:
+            path: /Users/etulika/Projects/akka-block-manager/test-data/node1/.actorchoreography
 
 ---
 
@@ -57,42 +62,95 @@ spec:
   type: LoadBalancer
   externalTrafficPolicy: Local
 
-#---
-#
-#
-#kind: Deployment
-#apiVersion: extensions/v1beta1
-#metadata:
-#  name: matrix-choreography
-#spec:
-#  replicas: 1
-#  selector:
-#    matchLabels:
-#      component: matrix-choreography
-#  template:
-#    metadata:
-#      labels:
-#        component: matrix-choreography
-#    spec:
-#      containers:
-#        - name: matrix-choreography
-#          image: matrix-choreography:1.0.25
-#          command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
-#          ports:
-#            - containerPort: 2000
-#            - containerPort: 2222
-#            - containerPort: 5149
-#          env:
-#            - name: EXTERNAL_POD_IP
-#              valueFrom:
-#                fieldRef:
-#                  fieldPath: status.podIP
-#            - name: MY_POD_IP
-#              valueFrom:
-#                fieldRef:
-#                  fieldPath: status.podIP
-#            - name: SEED_DOMAIN
-#              value: "$(MATRIX_CHOREOGRAPHY_SEED_SERVICE_HOST)"
-#            - name: SEED_PORT
-#              value: "5149"
-#          terminationMessagePolicy: FallbackToLogsOnError
+---
+
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: matrix-choreography-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: matrix-choreography-1
+  template:
+    metadata:
+      labels:
+        component: matrix-choreography-1
+    spec:
+      containers:
+        - name: matrix-choreography
+          image: akka-matrix/matrix-choreography
+          command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
+          volumeMounts:
+            - name: choreography-setup
+              mountPath: /root/.actorchoreography
+          ports:
+            - containerPort: 2000
+            - containerPort: 2222
+            - containerPort: 5149
+          env:
+            - name: EXTERNAL_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SEED_DOMAIN
+              value: "$(MATRIX_CHOREOGRAPHY_SEED_SERVICE_HOST)"
+            - name: SEED_PORT
+              value: "5149"
+          terminationMessagePolicy: FallbackToLogsOnError
+      volumes:
+        - name: choreography-setup
+          hostPath:
+            path: /Users/etulika/Projects/akka-block-manager/test-data/node2/.actorchoreography
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: matrix-choreography-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: matrix-choreography-2
+  template:
+    metadata:
+      labels:
+        component: matrix-choreography-2
+    spec:
+      containers:
+        - name: matrix-choreography
+          image: akka-matrix/matrix-choreography
+          command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
+          volumeMounts:
+            - name: choreography-setup
+              mountPath: /root/.actorchoreography
+          ports:
+            - containerPort: 2000
+            - containerPort: 2222
+            - containerPort: 5149
+          env:
+            - name: EXTERNAL_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SEED_DOMAIN
+              value: "$(MATRIX_CHOREOGRAPHY_SEED_SERVICE_HOST)"
+            - name: SEED_PORT
+              value: "5149"
+          terminationMessagePolicy: FallbackToLogsOnError
+      volumes:
+        - name: choreography-setup
+          hostPath:
+            path: /Users/etulika/Projects/akka-block-manager/test-data/node3/.actorchoreography

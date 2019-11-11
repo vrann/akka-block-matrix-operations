@@ -72,7 +72,11 @@ public class TopologyManager {
         SectionCoordinator sc = new SectionCoordinator(
                 system,
                 positions,
-                new BlockElementFactory(mediator),
+                new BlockElementFactory(
+                        log,
+                        mediator,
+                        sectionId
+                ),
                 mediator,
                 materializer,
                 sectionId);
@@ -95,15 +99,15 @@ public class TopologyManager {
         return //concat(
             path("start", () ->
                 get(() -> {
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(0, 0)), FileTransferReady.message(Position.fromCoordinates(0, 0), BlockMatrixType.aMN, "data-0-0.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(0, 1)), FileTransferReady.message(Position.fromCoordinates(0, 1), BlockMatrixType.aMN, "data-0-1.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(0, 2)), FileTransferReady.message(Position.fromCoordinates(0, 2), BlockMatrixType.aMN, "data-0-2.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(1, 0)), FileTransferReady.message(Position.fromCoordinates(1, 0), BlockMatrixType.aMN, "data-1-0.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(1, 1)), FileTransferReady.message(Position.fromCoordinates(1, 1), BlockMatrixType.aMN, "data-1-1.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(1, 2)), FileTransferReady.message(Position.fromCoordinates(1, 2), BlockMatrixType.aMN, "data-1-2.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(2, 0)), FileTransferReady.message(Position.fromCoordinates(2, 0), BlockMatrixType.aMN, "data-2-0.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(2, 1)), FileTransferReady.message(Position.fromCoordinates(2, 1), BlockMatrixType.aMN, "data-2-1.dat", sectionId)), ActorRef.noSender());
-                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(2, 2)), FileTransferReady.message(Position.fromCoordinates(2, 2), BlockMatrixType.aMN, "data-2-2.dat", sectionId)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(0, 0)), FileTransferReady.message(Position.fromCoordinates(0, 0), BlockMatrixType.aMN, "matrix-aMN-0-0.bin", 2)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(0, 1)), FileTransferReady.message(Position.fromCoordinates(0, 1), BlockMatrixType.aMN, "data-0-1.dat", 3)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(0, 2)), FileTransferReady.message(Position.fromCoordinates(0, 2), BlockMatrixType.aMN, "data-0-2.dat", 3)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(1, 0)), FileTransferReady.message(Position.fromCoordinates(1, 0), BlockMatrixType.aMN, "data-1-0.dat", 3)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(1, 1)), FileTransferReady.message(Position.fromCoordinates(1, 1), BlockMatrixType.aMN, "data-1-1.dat", 2)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(1, 2)), FileTransferReady.message(Position.fromCoordinates(1, 2), BlockMatrixType.aMN, "data-1-2.dat", 1)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(2, 0)), FileTransferReady.message(Position.fromCoordinates(2, 0), BlockMatrixType.aMN, "data-2-0.dat", 1)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(2, 1)), FileTransferReady.message(Position.fromCoordinates(2, 1), BlockMatrixType.aMN, "data-2-1.dat", 1)), ActorRef.noSender());
+                    mediator.tell(new DistributedPubSubMediator.Publish(FileTransferReady.getTopic(Position.fromCoordinates(2, 2)), FileTransferReady.message(Position.fromCoordinates(2, 2), BlockMatrixType.aMN, "data-2-2.dat", 2)), ActorRef.noSender());
 
                     return complete(StatusCodes.ACCEPTED, "message sent");
                 })

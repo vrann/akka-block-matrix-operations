@@ -21,38 +21,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-enum DiagonalBlockElementState implements BlockElementState {
-    A11Received,
-    L21Received,
-    A22Calculated,
-    A22Received,
-    L11Received
-}
-
-class BlockMatrixReceivedState {
-
-    public BlockElementState state;
-    public Position position;
-
-    public BlockMatrixReceivedState(BlockElementState state, Position position) {
-        this.state = state;
-        this.position = position;
-    }
-}
-
 public class DiagonalBlockElement implements BlockElement {
 
-    private Position position;
-    private ActorRef mediator;
-    private List<DiagonalBlockElementState> state = new ArrayList<>();
+    private final Position position;
+    private final ActorRef mediator;
+    private final A11ReadyHander a11Handler;
 
-    public DiagonalBlockElement(Position position, ActorRef mediator) {
+    public DiagonalBlockElement(
+            Position position,
+            ActorRef mediator,
+            A11ReadyHander a11Handler
+    ) {
         this.position = position;
         this.mediator = mediator;
-    }
-
-    public List<DiagonalBlockElementState> getState() {
-        return state;
+        this.a11Handler = a11Handler;
     }
 
     @Override
@@ -97,16 +79,16 @@ public class DiagonalBlockElement implements BlockElement {
         return builder
                 //means ready for factorization
                 .match(BlockMatrixDataAvailable.class,
+                    message -> a11Handler.handle(message, position, selfReference.getSelfInstance())
 
-
-                    message -> {
-                        if (this.state.contains(new BlockMatrixReceivedState(DiagonalBlockElementState.A11Received, position))) {
-
-                        }
+//                    message -> {
+//                        if (this.state.contains(new BlockMatrixReceivedState(DiagonalBlockElementState.A11Received, position))) {
+//
+//                        }
 //                        if (message.getX() == position.getX() && message.getY() == position.getY()) {
 //                            A11ReadyHander.handle(message, position, selfReference.getSelfInstance(), log, mediator, materializer);
 //                        }
-                }).match(L21Ready.class,
+                ).match(L21Ready.class,
                     //prerequisite -- A22 ready was already received
                     message -> L21ReadyHandler.handle(message, position, selfReference.getSelfInstance(), log, mediator, materializer)
 //                ).match(FileTransferReady.class,
