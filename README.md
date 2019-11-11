@@ -49,9 +49,10 @@ those events.
 **File Transfer component** sets up initial actor placement, basic events and coordination between actors to enable files
 exchange. File transfer is initiated by the event about file is ready on 
 
-**Section Coordinator** is responsible for 
+**Section Coordinator** is responsible for running the actors for the blocks related to the section and subscribe them on 
+all the events. It also responsible for setting up file transfers with other sections.  
 
-**Generic Block Matrix Actor**
+**Generic Block Matrix Actor** implementation of the actor which can have element attached with the correct handlers
 
 **Elements**: Based on position of the blocks there are different events and responsibilities. These differences are 
 encapsulated in Elements logic. Currently supported elements are: Diagonal position (N, N), Sub-Diagonal position (N, M: M>N), 
