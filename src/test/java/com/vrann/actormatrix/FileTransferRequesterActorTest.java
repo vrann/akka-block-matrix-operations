@@ -4,32 +4,28 @@ import akka.actor.*;
 import akka.cluster.pubsub.DistributedPubSub;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.japi.pf.ReceiveBuilder;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Sink;
 import akka.testkit.javadsl.TestKit;
 import akka.util.ByteString;
 import com.typesafe.config.ConfigFactory;
-import com.vrann.actormatrix.actor.FileTransferRequesterActor;
-import com.vrann.actormatrix.actor.FileTransferSenderActor;
-import com.vrann.actormatrix.elements.BlockElementFactory;
-import com.vrann.actormatrix.handler.FileTransferReadyHandler;
-import com.vrann.actormatrix.handler.FileTransferRequestHandler;
-import com.vrann.actormatrix.message.FileTransfer;
-import com.vrann.actormatrix.message.FileTransferReady;
-import com.vrann.actormatrix.message.FileTransferRequest;
-import com.vrann.blockedcholesky.operation.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockFactory;
+import com.vrann.actormatrix.cholesky.CholeskyIntegrationTest;
+import com.vrann.actormatrix.cholesky.handler.HandlerFactory;
+import com.vrann.actormatrix.filetransfer.actor.FileTransferRequesterActor;
+import com.vrann.actormatrix.filetransfer.actor.FileTransferSenderActor;
+import com.vrann.actormatrix.filetransfer.handler.FileTransferReadyHandler;
+import com.vrann.actormatrix.filetransfer.handler.FileTransferRequestHandler;
+import com.vrann.actormatrix.filetransfer.message.FileTransfer;
+import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
+import com.vrann.actormatrix.cholesky.BlockMatrixType;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -41,11 +37,13 @@ class FileTransferRequesterActorTest {
 
     static ActorSystem system;
     static LoggingAdapter log;
+    static ActorSystemContext context;
 
     @BeforeAll
     public static void setup() {
         system = ActorSystem.create("l11-actor-system", ConfigFactory.load("app.conf"));
-        log = Logging.getLogger(system, system);
+        context = ActorSystemContext.createFromActorSystem(system);
+        log = context.getLog();
     }
 
     @AfterAll
@@ -65,13 +63,12 @@ class FileTransferRequesterActorTest {
                 );
 
                 final ActorRef mediator = DistributedPubSub.get(system).mediator();
+                File file = new File(CholeskyIntegrationTest.class.getResource("node.conf").getPath());
                 final SectionCoordinator sc = new SectionCoordinator(
-                        system,
-                        positions,
-                        new BlockElementFactory(log, mediator, 2),
-                        mediator,
-                        materializer,
-                        2
+                        SectionConfiguration.createCustomNodeConfiguration(file),
+                        new BlockFactory(HandlerFactory.create(context)),
+                        context,
+                        new MatrixBlockFileLocator()
                 );
 
                 final TestKit probe = new TestKit(system);
@@ -93,7 +90,7 @@ class FileTransferRequesterActorTest {
                                         return akk;});
 
                             message.getSourceRef().getSource().limit(100).to(concatSink).run(materializer);
-                        }, sc, 1), "FileTransferRequesterActor");
+                        }, positions, 1), "FileTransferRequesterActor");
 
                 final ActorRef sender =  system.actorOf(
                         FileTransferSenderActor.props(materializer, system,

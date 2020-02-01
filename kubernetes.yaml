@@ -15,6 +15,7 @@ spec:
       containers:
         - name: matrix-choreography-seed
           image: akka-matrix/matrix-choreography
+          imagePullPolicy: IfNotPresent
           command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
           volumeMounts:
             - name: choreography-setup
@@ -82,6 +83,7 @@ spec:
       containers:
         - name: matrix-choreography
           image: akka-matrix/matrix-choreography
+          imagePullPolicy: IfNotPresent
           command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
           volumeMounts:
             - name: choreography-setup
@@ -128,6 +130,7 @@ spec:
       containers:
         - name: matrix-choreography
           image: akka-matrix/matrix-choreography
+          imagePullPolicy: IfNotPresent
           command: ["java", "-jar",  "/app/target/topology-1.0-SNAPSHOT.jar"]
           volumeMounts:
             - name: choreography-setup

@@ -1,8 +1,7 @@
 package com.vrann.dataformat;
 
 import com.vrann.actormatrix.Position;
-import com.vrann.blockedcholesky.operation.BlockMatrixType;
-import org.apache.arrow.flatbuf.Block;
+import com.vrann.actormatrix.cholesky.BlockMatrixType;
 
 import java.io.DataInputStream;
 import java.io.File;

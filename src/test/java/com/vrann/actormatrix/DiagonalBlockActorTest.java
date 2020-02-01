@@ -10,20 +10,21 @@ import akka.stream.javadsl.Sink;
 import akka.testkit.javadsl.TestKit;
 import akka.util.ByteString;
 import com.typesafe.config.ConfigFactory;
-import com.vrann.actormatrix.actor.FileTransferRequesterActor;
-import com.vrann.actormatrix.actor.FileTransferSenderActor;
-import com.vrann.actormatrix.elements.BlockElementFactory;
-import com.vrann.actormatrix.handler.FileTransferReadyHandler;
-import com.vrann.actormatrix.handler.FileTransferRequestHandler;
-import com.vrann.actormatrix.message.FileTransfer;
-import com.vrann.actormatrix.message.FileTransferReady;
-import com.vrann.blockedcholesky.operation.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockFactory;
+import com.vrann.actormatrix.cholesky.CholeskyIntegrationTest;
+import com.vrann.actormatrix.cholesky.handler.HandlerFactory;
+import com.vrann.actormatrix.filetransfer.actor.FileTransferRequesterActor;
+import com.vrann.actormatrix.filetransfer.actor.FileTransferSenderActor;
+import com.vrann.actormatrix.filetransfer.handler.FileTransferReadyHandler;
+import com.vrann.actormatrix.filetransfer.handler.FileTransferRequestHandler;
+import com.vrann.actormatrix.filetransfer.message.FileTransfer;
+import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
+import com.vrann.actormatrix.cholesky.BlockMatrixType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -34,11 +35,13 @@ class DiagonalBlockActorTest {
 
     static ActorSystem system;
     static LoggingAdapter log;
+    static ActorSystemContext context;
 
     @BeforeAll
     public static void setup() {
         system = ActorSystem.create("l11-actor-system", ConfigFactory.load("app.conf"));
-        log = Logging.getLogger(system, system);
+        context = ActorSystemContext.createFromActorSystem(system);
+        log = context.getLog();
     }
 
     @AfterAll
@@ -58,8 +61,12 @@ class DiagonalBlockActorTest {
                 );
 
                 final ActorRef mediator = DistributedPubSub.get(system).mediator();
-                final SectionCoordinator sc = new SectionCoordinator(system, positions,
-                        new BlockElementFactory(log, mediator, 2), mediator, materializer, 2);
+                File file = new File(CholeskyIntegrationTest.class.getResource("node.conf").getPath());
+                final SectionCoordinator sc = new SectionCoordinator(
+                        SectionConfiguration.createCustomNodeConfiguration(file),
+                        new BlockFactory(HandlerFactory.create(context)), context,
+                        new MatrixBlockFileLocator()
+                        );
 
                 final TestKit probe = new TestKit(system);
 
@@ -80,7 +87,7 @@ class DiagonalBlockActorTest {
                                         return akk;});
 
                             message.getSourceRef().getSource().limit(100).to(concatSink).run(materializer);
-                        }, sc, 1), "FileTransferRequesterActor");
+                        }, positions, 1), "FileTransferRequesterActor");
 
                 final ActorRef sender =  system.actorOf(
                         FileTransferSenderActor.props(materializer, system,

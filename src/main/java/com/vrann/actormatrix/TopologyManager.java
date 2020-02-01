@@ -1,17 +1,10 @@
 package com.vrann.actormatrix;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletionStage;
-
 import akka.NotUsed;
 import akka.cluster.pubsub.DistributedPubSub;
 import akka.cluster.pubsub.DistributedPubSubMediator;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
-
 import akka.http.javadsl.ConnectHttp;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.ServerBinding;
@@ -20,81 +13,51 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.Route;
 import akka.management.javadsl.AkkaManagement;
-import com.typesafe.config.*;
 import static akka.http.javadsl.server.Directives.path;
 import static akka.http.javadsl.server.Directives.get;
 import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.concat;
-
 import akka.actor.ActorSystem;
 import akka.actor.ActorRef;
-
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Flow;
-import com.typesafe.config.ConfigFactory;
-import com.vrann.actormatrix.elements.BlockElementFactory;
-import com.vrann.actormatrix.message.FileTransferReady;
-import com.vrann.blockedcholesky.operation.BlockMatrixType;
+import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
+import com.vrann.actormatrix.cholesky.BlockMatrixType;
 
 public class TopologyManager {
 
-    private static ActorSystem system;
-    static private LoggingAdapter log;
+    private final SectionCoordinator sectionCoordinator;
 
-    public static void main(String[] args) throws IOException {
-        system = ActorSystem.create("l11-actor-system", ConfigFactory.load("app1.conf"));
-        final ActorMaterializer materializer = ActorMaterializer.create(system);
-        log = Logging.getLogger(system, system);
-        ActorRef mediator = DistributedPubSub.get(system).mediator();
+    public TopologyManager(
+            SectionCoordinator sectionCoordinator
+    ) {
+        this.sectionCoordinator = sectionCoordinator;
+    }
 
-
-        AkkaManagement.get(system).start();
-        Runtime.getRuntime().addShutdownHook(new ProcessorHook(system));
-
-        StringBuilder pathBuilder = (new StringBuilder())
-            .append(System.getProperty("user.home"))
-            .append("/.actorchoreography/node.conf");
-
-        Config config = ConfigFactory.parseFile(new File(pathBuilder.toString()),
-                ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
-
-        List<? extends ConfigObject> positionsArray = config.getObjectList("actors.matrix-blocks");
-        List<Position> positions = new ArrayList<>();
-        int sectionId = config.getInt("actors.section");
-
-        for (ConfigObject position: positionsArray) {
-            positions.add(new Position(position.get("x").render(), position.get("y").render()));
+    Thread processHook = new Thread() {
+        @Override
+        public void run() {
+            sectionCoordinator.stop();
         }
+    };
 
-        log.info("Number of actors in section: {}", positions.size());
+    public void run() throws IOException {
 
+        sectionCoordinator.createSectionActors();
+        sectionCoordinator.start();
+        Runtime.getRuntime().addShutdownHook(processHook);
 
-        SectionCoordinator sc = new SectionCoordinator(
-                system,
-                positions,
-                new BlockElementFactory(
-                        log,
-                        mediator,
-                        sectionId
-                ),
-                mediator,
-                materializer,
-                sectionId);
-        sc.startActors();
-
-        TopologyManager app = new TopologyManager();
+        //final Http http = sectionCoordinator.getHttpEndpoint();
 
 
-        final Http http = Http.get(system);
-        final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = app.createRoute(system, materializer, sectionId).flow(system, materializer);
+        /*final Http http = Http.get(system);
+        final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = createRoute(system, materializer, sectionConfig.getSectionId())
+                .flow(system, materializer);
         final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow,
-                ConnectHttp.toHost("0.0.0.0", 2000), materializer);
+                ConnectHttp.toHost("0.0.0.0", 2000), materializer);*/
 
     }
 
-
-
-    private Route createRoute(ActorSystem system, ActorMaterializer materializer, int sectionId) {
+    /*private Route createRoute(ActorSystem system, ActorMaterializer materializer, int sectionId) {
         ActorRef mediator = DistributedPubSub.get(system).mediator();
         return //concat(
             path("start", () ->
@@ -113,23 +76,6 @@ public class TopologyManager {
                 })
             );
         //);
-    }
-}
-
-class ProcessorHook extends Thread {
-
-    ActorSystem system;
-
-    public ProcessorHook(ActorSystem system) {
-        this.system = system;
-    }
-
-    @Override
-    public void run(){
-        System.out.println("Shutting down actor system");
-        system.terminate();
-        System.out.println("Actor system terminated");
-
-    }
+    }*/
 }
 
