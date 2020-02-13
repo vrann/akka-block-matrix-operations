@@ -11,7 +11,6 @@ import akka.stream.javadsl.Source;
 import akka.stream.javadsl.StreamRefs;
 import akka.util.ByteString;
 import com.vrann.actormatrix.*;
-import archive.handler.MessageHandler;
 import com.vrann.actormatrix.filetransfer.message.FileTransfer;
 import com.vrann.actormatrix.filetransfer.message.FileTransferRequest;
 import scala.concurrent.ExecutionContextExecutor;
@@ -52,15 +51,19 @@ public class FileTransferRequestHandler implements MessageHandler<FileTransferRe
         Source<ByteString, CompletionStage<IOResult>> fileSource = FileIO.fromFile(file);
         CompletionStage<SourceRef<ByteString>> fileRef = fileSource.runWith(StreamRefs.sourceRef(), materializer);
 
-        System.out.println(sender.path());
+
         Patterns.pipe(
                 fileRef.thenApply(
-                        ref -> new FileTransfer(
+                        ref -> {
+                            FileTransfer fileTransferMessage = new FileTransfer(
                                     message.getFileName(),
                                     message.getMatrixType(),
                                     message.getPosition(),
                                     ref
-                        )
+                            );
+                            log.info("Sending message {} to {}", fileTransferMessage, sender);
+                            return fileTransferMessage;
+                        }
                 ), dispatcher)
                 .to(sender, selfReference);
     }

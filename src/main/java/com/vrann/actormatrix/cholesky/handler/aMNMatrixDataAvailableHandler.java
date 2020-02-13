@@ -5,16 +5,16 @@ import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.block.state.StateManagement;
-import com.vrann.actormatrix.cholesky.message.A11MatrixDataAvailable;
+import com.vrann.actormatrix.cholesky.message.aMNMatrixDataAvailable;
 
-public class A22MatrixDataAvailableHandler implements BlockMatrixDataAvailableHandler<A11MatrixDataAvailable> {
+public class aMNMatrixDataAvailableHandler implements BlockMatrixDataAvailableHandler<aMNMatrixDataAvailable> {
 
     private LoggingAdapter log;
     private ActorRef mediator;
     private ActorMaterializer materializer;
     private final StateManagement stateMachine;
 
-    public A22MatrixDataAvailableHandler(
+    public aMNMatrixDataAvailableHandler(
             LoggingAdapter log,
             ActorRef mediator,
             ActorMaterializer materializer,
@@ -26,8 +26,8 @@ public class A22MatrixDataAvailableHandler implements BlockMatrixDataAvailableHa
         this.stateMachine = stateMachine;
     }
 
-    public void handle(A11MatrixDataAvailable message, Position position, int sectionId, ActorRef selfReference) {
-        log.info("Received A11Ready message");
+    public void handle(aMNMatrixDataAvailable message, Position position, int sectionId, ActorRef selfReference) {
+        log.info("Received aMNMatrixDataAvailable message {}", message);
         /*if (message.getPosition().getX() != position.getX()
                 || message.getPosition().getY() != position.getY()
         ) {

@@ -1,6 +1,6 @@
 package archive.handler;
 
-import archive.message.Message;
+import com.vrann.actormatrix.Message;
 
 interface BlockMessageHandler<M extends Message> {
     void handle(M message, int sectionId);

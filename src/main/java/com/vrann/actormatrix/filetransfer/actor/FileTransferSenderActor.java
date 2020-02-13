@@ -9,7 +9,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
-import archive.handler.MessageHandler;
+import com.vrann.actormatrix.filetransfer.handler.MessageHandler;
 import com.vrann.actormatrix.filetransfer.message.FileTransferRequest;
 
 public class FileTransferSenderActor extends AbstractActor {
@@ -42,7 +42,6 @@ public class FileTransferSenderActor extends AbstractActor {
         log  = Logging.getLogger(system, system);
         mediator = DistributedPubSub.get(system).mediator();
         this.sectionId = sectionId;
-        log.info("Subscribed request-file-transfer-{}", sectionId);
         log.info("Subscribed request-file-transfer-{}", sectionId);
         this.handler = handler;
 

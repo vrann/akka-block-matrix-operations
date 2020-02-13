@@ -4,6 +4,7 @@ import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.Position;
+import com.vrann.actormatrix.block.state.StateManagement;
 import com.vrann.actormatrix.cholesky.message.A11MatrixDataAvailable;
 
 public class L11MatrixDataAvailableHandler implements BlockMatrixDataAvailableHandler<A11MatrixDataAvailable> {
@@ -11,15 +12,18 @@ public class L11MatrixDataAvailableHandler implements BlockMatrixDataAvailableHa
     private LoggingAdapter log;
     private ActorRef mediator;
     private ActorMaterializer materializer;
+    private final StateManagement stateMachine;
 
     public L11MatrixDataAvailableHandler(
-        LoggingAdapter log,
-        ActorRef mediator,
-        ActorMaterializer materializer
+            LoggingAdapter log,
+            ActorRef mediator,
+            ActorMaterializer materializer,
+            StateManagement stateMachine
     ) {
         this.log = log;
         this.mediator = mediator;
         this.materializer = materializer;
+        this.stateMachine = stateMachine;
     }
 
     public void handle(A11MatrixDataAvailable message, Position position, int sectionId, ActorRef selfReference) {

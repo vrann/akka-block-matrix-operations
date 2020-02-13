@@ -1,4 +1,4 @@
-package archive.handler;
+package com.vrann.actormatrix.filetransfer.handler;
 
 import akka.actor.ActorRef;
 import com.vrann.actormatrix.filetransfer.message.FileTransferRequest;

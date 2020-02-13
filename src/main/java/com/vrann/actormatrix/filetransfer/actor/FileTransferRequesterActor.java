@@ -10,7 +10,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.Position;
-import archive.handler.SectionMessageHandler;
+import com.vrann.actormatrix.filetransfer.handler.SectionMessageHandler;
 import com.vrann.actormatrix.filetransfer.message.FileTransfer;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
 
@@ -60,11 +60,9 @@ public class FileTransferRequesterActor extends AbstractActor {
         this.fileTransferHandler = fileTransferHandler;
 
         log.info("Started FileTransferRequesterActor for section {}", sectionId);
-        log.info("Started FileTransferRequesterActor for section {}", sectionId);
 
         for (Position pos: positions) {
             String topic = FileTransferReady.getTopic(pos);
-            log.info("Requesting subscription to {}", topic);
             log.info("Requesting subscription to {}", topic);
             mediator.tell(new DistributedPubSubMediator.Subscribe(topic, getSelf()), getSelf());
         }
@@ -72,17 +70,13 @@ public class FileTransferRequesterActor extends AbstractActor {
 
     @Override
     public AbstractActor.Receive createReceive() {
-        System.out.println(getSelf().path());
+
         return receiveBuilder()
                 .match(FileTransferReady.class, message -> {
-                    System.out.printf("Received message FileTransferReady (%d, %d) %s %s\n",
-                            message.getPosition().getX(), message.getPosition().getY(),
-                            message.getMatrixType(), message.getFileName());
+                    log.info("Received message {}", message);
                     fileTransferReadyHandler.handle(message, sectionId, getSelf());
                 }).match(FileTransfer.class, message -> {
-                    System.out.printf("Received message FileTransfer (%d, %d) %s %s\n",
-                            message.getPosition().getX(), message.getPosition().getY(),
-                            message.getMatrixType(), message.getFileName());
+                    log.info("Received message {}", message);
                     fileTransferHandler.handle(message, sectionId, getSelf());
                 }).match(DistributedPubSubMediator.SubscribeAck.class,
                     message -> log.info("subscribed to topic {}", message.subscribe().topic())

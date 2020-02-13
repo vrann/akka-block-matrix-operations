@@ -1,6 +1,7 @@
 package com.vrann.actormatrix.block;
 
 import com.vrann.actormatrix.Position;
+import com.vrann.actormatrix.block.state.StateManagement;
 import com.vrann.actormatrix.cholesky.handler.HandlerFactory;
 
 public class BlockFactory {
@@ -13,14 +14,19 @@ public class BlockFactory {
 
     public Block createBlockElement(Position pos, int sectionId)
     {
+        StateManagement stateMachine = new StateManagement();
         if (pos.getX() == pos.getY() && pos.getX() == 0) {
-            return new DiagonalBlock(factory, pos, sectionId);
+//            BlockStateMachine stateMachine = BlockStateMachine.createDiagonal(pos);
+            return new DiagonalBlock(factory, stateMachine, pos, sectionId);
         } else if (pos.getX() == pos.getY()) {
-            return new DiagonalBlock(factory, pos, sectionId);
+//            BlockStateMachine stateMachine = BlockStateMachine.createDiagonal(pos);
+            return new DiagonalBlock(factory, stateMachine, pos, sectionId);
         } else if (pos.getX() == 0) {
-            return new SubdiagonalBlock(factory, pos, sectionId);
+//            BlockStateMachine stateMachine = BlockStateMachine.createSubDiagonal(pos);
+            return new SubdiagonalBlock(factory, stateMachine, pos, sectionId);
         } else {
-            return new SubdiagonalBlock(factory, pos, sectionId);
+//            BlockStateMachine stateMachine = BlockStateMachine.createSubDiagonal(pos);
+            return new SubdiagonalBlock(factory, stateMachine, pos, sectionId);
         }
     }
 

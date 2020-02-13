@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.concurrent.Callable;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 
@@ -40,36 +42,14 @@ public class CholeskyIntegrationTest {
                 ConfigFactory.load("app.conf")
         );
 
-//        StringBuilder pathBuilder = (new StringBuilder())
-//                .append(System.getProperty("user.home"))
-//                .append("/.actorchoreography/node.conf");
-//        File file = new File(pathBuilder.toString());
-
-        FileLocator fileLocator1 = (fileName) -> {
-            context.getLog().info(String.format("test-data/node%d/.actorchoreography/%s", 1, fileName));
-            return new File(
-                    CholeskyIntegrationTest.class.getClassLoader()
-                            .getResource(String.format("test-data/node%d/.actorchoreography", 1))
-                            .getPath() + "/" + fileName
-            );
-        };
-
-        FileLocator fileLocator2 = (fileName) -> {
-            context.getLog().info(String.format("test-data/node%d/.actorchoreography/%s", 2, fileName));
-            return new File(
-                    CholeskyIntegrationTest.class.getClassLoader()
-                            .getResource(String.format("test-data/node%d/.actorchoreography", 2))
-                            .getPath() + "/" + fileName
-            );
-        };
-
-        FileLocator fileLocator3 = (fileName) -> {
-            context.getLog().info(String.format("test-data/node%d/.actorchoreography/%s", 3, fileName));
-            return new File(
-                    CholeskyIntegrationTest.class.getClassLoader()
-                            .getResource(String.format("test-data/node%d/.actorchoreography", 3))
-                            .getPath() + "/" + fileName
-            );
+        Function<Integer, FileLocator> getFileLocator = (a) ->
+            (String fileName) -> {
+                context.getLog().info(String.format("test-data/node%d/.actorchoreography/%s", a, fileName));
+                return new File(
+                        CholeskyIntegrationTest.class.getClassLoader()
+                                .getResource(String.format("test-data/node%d/.actorchoreography", a))
+                                .getPath() + "/" + fileName
+                );
         };
 
         File fileSection1 = new File(CholeskyIntegrationTest.class.getClassLoader().getResource("node1.conf").getPath());
@@ -77,7 +57,7 @@ public class CholeskyIntegrationTest {
                 SectionConfiguration.createCustomNodeConfiguration(fileSection1),
                 new BlockFactory(HandlerFactory.create(context)),
                 context,
-                fileLocator1
+                getFileLocator.apply(1)
         );
 
         File fileSection2 = new File(CholeskyIntegrationTest.class.getClassLoader().getResource("node2.conf").getPath());
@@ -85,7 +65,7 @@ public class CholeskyIntegrationTest {
                 SectionConfiguration.createCustomNodeConfiguration(fileSection2),
                 new BlockFactory(HandlerFactory.create(context)),
                 context,
-                fileLocator2
+                getFileLocator.apply(2)
         );
 
         File fileSection3 = new File(CholeskyIntegrationTest.class.getClassLoader().getResource("node3.conf").getPath());
@@ -93,22 +73,23 @@ public class CholeskyIntegrationTest {
                 SectionConfiguration.createCustomNodeConfiguration(fileSection3),
                 new BlockFactory(HandlerFactory.create(context)),
                 context,
-                fileLocator3
+                getFileLocator.apply(3)
         );
     }
 
     @AfterAll
     public static void teardown() {
-        TestKit.shutdownActorSystem(context.getActorSystem());
+        //TestKit.shutdownActorSystem(context.getActorSystem());
     }
 
     private void sendMessage(int x, int y, int sectionId) {
         String filename = String.format("matrix-aMN-%d-%d.bin", x, y);
+        BlockMatrixType type = x == y ? BlockMatrixType.A11 : BlockMatrixType.aMN;
         context.getMediator().tell(new DistributedPubSubMediator.Publish(
                 FileTransferReady.getTopic(Position.fromCoordinates(x, y)),
                 FileTransferReady.message(
                         Position.fromCoordinates(x, y),
-                        BlockMatrixType.aMN, filename,
+                        type, filename,
                         sectionId)
         ), ActorRef.noSender());
     }
@@ -134,21 +115,24 @@ public class CholeskyIntegrationTest {
                 sendMessage(2, 1, 1);
                 sendMessage(2, 2, 2);
 
-                /*final TestKit probe = new TestKit(context.getActorSystem());
+                final TestKit probe = new TestKit(context.getActorSystem());
                 within(
-                        Duration.ofSeconds(3),
+                        Duration.ofSeconds(10),
                         () -> {
                             try {
                                 //awaitCond(probe::msgAvailable);
-                                probe.expectMsgClass(Duration.ofSeconds(5), FileTransfer.class);
+                                probe.expectMsgClass(Duration.ofSeconds(10), FileTransfer.class);
                                 //expectNoMessage();
+                                sectionCoordinator1.stop();
+                                sectionCoordinator2.stop();
+                                sectionCoordinator3.stop();
                                 return null;
                             } catch (Exception e) {
                                 System.out.println(e);
                             }
                             return null;
                         }
-                );*/
+                );
             }
         };
     }

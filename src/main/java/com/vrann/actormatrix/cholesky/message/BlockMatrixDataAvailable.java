@@ -1,12 +1,13 @@
 package com.vrann.actormatrix.cholesky.message;
 
+import com.vrann.actormatrix.Message;
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.cholesky.BlockMatrixType;
 
 import java.io.File;
 import java.io.Serializable;
 
-public class BlockMatrixDataAvailable implements Serializable {
+public class BlockMatrixDataAvailable implements BlockMatrixMessage {
 
     private final File filePath;
     private final int sectionId;
@@ -53,6 +54,7 @@ public class BlockMatrixDataAvailable implements Serializable {
                 case L21: return new L21MatrixDataAvailable(position, filePath, sectionId);
                 case L11: return new L11MatrixDataAvailable(position, filePath, sectionId);
                 case A22: return new A22MatrixDataAvailable(position, filePath, sectionId);
+                case aMN: return new aMNMatrixDataAvailable(position, filePath, sectionId);
             }
             return new BlockMatrixDataAvailable(position, matrixType, filePath, sectionId);
         }
@@ -89,5 +91,10 @@ public class BlockMatrixDataAvailable implements Serializable {
 
     public Position getPosition() {
         return position;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s: %s %s-%s-%d-%s", this.getClass(), getTopic(), filePath, matrixType, sectionId, position);
     }
 }

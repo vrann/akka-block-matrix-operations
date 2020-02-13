@@ -19,7 +19,8 @@ public class ActorSystemContext {
             ActorSystem actorSystem
     ) {
         this.actorSystem = actorSystem;
-        log =  Logging.getLogger(actorSystem, actorSystem);
+        log = Logging.getLogger(actorSystem.eventStream(), "my.string");
+//        log =  Logging.getLogger(actorSystem, actorSystem);
         materializer = ActorMaterializer.create(actorSystem);
         mediator = DistributedPubSub.get(actorSystem).mediator();
     }

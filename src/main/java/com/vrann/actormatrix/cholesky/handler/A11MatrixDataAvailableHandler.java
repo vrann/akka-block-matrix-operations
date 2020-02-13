@@ -3,7 +3,9 @@ package com.vrann.actormatrix.cholesky.handler;
 import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
+import com.vrann.actormatrix.BlockMatrixAction;
 import com.vrann.actormatrix.Position;
+import com.vrann.actormatrix.block.state.StateManagement;
 import com.vrann.actormatrix.cholesky.message.A11MatrixDataAvailable;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
 
@@ -12,20 +14,24 @@ public class A11MatrixDataAvailableHandler implements BlockMatrixDataAvailableHa
     private LoggingAdapter log;
     private ActorRef mediator;
     private ActorMaterializer materializer;
+    private final StateManagement stateMachine;
 
     public A11MatrixDataAvailableHandler(
-        LoggingAdapter log,
-        ActorRef mediator,
-        ActorMaterializer materializer
+            LoggingAdapter log,
+            ActorRef mediator,
+            ActorMaterializer materializer,
+            StateManagement stateMachine
     ) {
         this.log = log;
         this.mediator = mediator;
         this.materializer = materializer;
+        this.stateMachine = stateMachine;
     }
 
     public void handle(A11MatrixDataAvailable message, Position position, int sectionId, ActorRef selfReference) {
-        log.info("Received A11MatrixDataAvailable message");
-        log.info(FileTransferReady.getTopic(message.getPosition()));
+        log.info("Received A11MatrixDataAvailable message {}", message);
+//        stateMachine.inform(BlockMatrixAction.RECEIVE, message);
+//        stateMachine.inform(BlockMatrixAction.PROCESS, message);
         /*if (message.getPosition().getX() != position.getX()
                 || message.getPosition().getY() != position.getY()
         ) {

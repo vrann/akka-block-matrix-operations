@@ -5,7 +5,6 @@ import akka.cluster.pubsub.DistributedPubSubMediator;
 import akka.event.LoggingAdapter;
 import com.vrann.actormatrix.FileLocator;
 import com.vrann.actormatrix.cholesky.message.BlockMatrixDataLoaded;
-import archive.handler.SectionMessageHandler;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
 import com.vrann.actormatrix.filetransfer.message.FileTransferRequest;
 import java.io.File;
@@ -38,13 +37,13 @@ public class FileTransferReadyHandler implements SectionMessageHandler<FileTrans
 
         if (message.getSourceSectionId() != currentSectionId) {
             String topic = String.format("request-file-transfer-%d", message.getSourceSectionId());
-            log.info("Publishing topic from FileTransferReadyHandler: {}", topic);
-            mediator.tell(new DistributedPubSubMediator.Publish(topic,
-                            new FileTransferRequest(
-                                    message.getPosition(),
-                                    message.getMatrixType(),
-                                    message.getFileName(),
-                                    message.getSourceSectionId())),
+            FileTransferRequest fileTransferRequest = new FileTransferRequest(
+                    message.getPosition(),
+                    message.getMatrixType(),
+                    message.getFileName(),
+                    message.getSourceSectionId());
+            log.info("Publishing topic from FileTransferReadyHandler: {}, {}", topic, fileTransferRequest);
+            mediator.tell(new DistributedPubSubMediator.Publish(topic, fileTransferRequest),
                     selfReference);
         } else {
             final File file = fileLocator.getMatrixBlockFilePath(message.getFileName());

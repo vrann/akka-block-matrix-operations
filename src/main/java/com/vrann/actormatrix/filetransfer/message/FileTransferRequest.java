@@ -35,4 +35,8 @@ public class FileTransferRequest implements Serializable {
         return position;
     }
 
+    @Override
+    public String toString() {
+        return String.format("file-transfer-request-%s-%d-%s-%s", fileName, sourceSectionId, position, matrixType);
+    }
 }

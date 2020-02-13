@@ -9,8 +9,7 @@ import akka.stream.javadsl.FileIO;
 import akka.stream.javadsl.Sink;
 import akka.util.ByteString;
 import com.vrann.actormatrix.FileLocator;
-import archive.handler.SectionMessageHandler;
-import archive.message.BlockMatrixDataAvailable;
+import com.vrann.actormatrix.cholesky.message.BlockMatrixDataAvailable;
 import com.vrann.actormatrix.filetransfer.message.FileTransfer;
 
 import java.io.File;
@@ -87,7 +86,7 @@ public class FileTransferHandler implements SectionMessageHandler<FileTransfer> 
                 .setPosition(message.getPosition())
                 .setSectionId(currentSectionId)
                 .build();
-        log.info("Notification about available file is sent {}", resultMessage.getTopic());
+        log.info("Notification about available file is sent {}", resultMessage);
         mediator.tell(new DistributedPubSubMediator.Publish(resultMessage.getTopic(), resultMessage), selfReference);
     }
 

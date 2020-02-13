@@ -4,7 +4,7 @@ import akka.stream.SourceRef;
 import akka.util.ByteString;
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.cholesky.BlockMatrixType;
-import archive.message.Message;
+import com.vrann.actormatrix.Message;
 
 import java.io.Serializable;
 
@@ -40,5 +40,10 @@ public class FileTransfer implements Serializable, Message {
 
     public SourceRef<ByteString> getSourceRef() {
         return sourceRef;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("file-transfer-ready-%s-%s-%s", fileName, position, matrixType);
     }
 }

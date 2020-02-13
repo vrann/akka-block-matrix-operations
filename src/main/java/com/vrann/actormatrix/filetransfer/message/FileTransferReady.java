@@ -2,7 +2,7 @@ package com.vrann.actormatrix.filetransfer.message;
 
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.cholesky.BlockMatrixType;
-import archive.message.Message;
+import com.vrann.actormatrix.Message;
 
 import java.io.Serializable;
 
@@ -42,5 +42,10 @@ public class FileTransferReady implements Serializable, Message {
 
     public Position getPosition() {
         return position;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("file-transfer-ready-%s-%d-%s-%s", fileName, sourceSectionId, position, matrixType);
     }
 }

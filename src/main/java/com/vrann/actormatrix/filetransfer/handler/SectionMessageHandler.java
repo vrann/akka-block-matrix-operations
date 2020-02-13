@@ -1,7 +1,7 @@
-package archive.handler;
+package com.vrann.actormatrix.filetransfer.handler;
 
 import akka.actor.ActorRef;
-import archive.message.Message;
+import com.vrann.actormatrix.Message;
 
 import java.io.IOException;
 
