@@ -1,15 +1,16 @@
 package com.vrann.actormatrix.block.state;
 
+import com.vrann.actormatrix.cholesky.CholeskyBlockState;
+
 import java.util.List;
-import java.util.concurrent.locks.Condition;
 
 public class TransitionRule {
 
-    private final BlockState from;
-    private final BlockState nextState;
+    private final CholeskyBlockState from;
+    private final CholeskyBlockState nextState;
     private final List<StateCondition> conditions;
 
-    public TransitionRule(BlockState from, BlockState nextState, List<StateCondition> conditions) {
+    public TransitionRule(CholeskyBlockState from, CholeskyBlockState nextState, List<StateCondition> conditions) {
         this.from = from;
         this.nextState = nextState;
         this.conditions = conditions;
@@ -22,11 +23,11 @@ public class TransitionRule {
         return false;
     }
 
-    public BlockState nextState() {
+    public CholeskyBlockState nextState() {
         return nextState;
     }
 
-    public BlockState from() {
+    public CholeskyBlockState from() {
         return from;
     }
 

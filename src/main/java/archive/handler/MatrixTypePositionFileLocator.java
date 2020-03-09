@@ -1,7 +1,7 @@
 package archive.handler;
 
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
 import java.io.File;
 
 public class MatrixTypePositionFileLocator {

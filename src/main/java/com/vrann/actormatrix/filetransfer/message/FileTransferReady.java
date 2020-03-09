@@ -1,8 +1,9 @@
 package com.vrann.actormatrix.filetransfer.message;
 
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
 import com.vrann.actormatrix.Message;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 
 import java.io.Serializable;
 
@@ -10,17 +11,17 @@ public class FileTransferReady implements Serializable, Message {
 
     private final String fileName;
     private final int sourceSectionId;
-    private final BlockMatrixType matrixType;
+    private final CholeskyMatrixType matrixType;
     private final Position position;
 
-    public FileTransferReady(Position position, BlockMatrixType matrixType, String fileName, int sourceSectionId) {
+    public FileTransferReady(Position position, CholeskyMatrixType matrixType, String fileName, int sourceSectionId) {
         this.fileName = fileName;
         this.sourceSectionId = sourceSectionId; //we need this section id in order to tell where to look for the file for; Section Manager won't help here
         this.position = position;
         this.matrixType = matrixType;
     }
 
-    public static FileTransferReady message(Position position, BlockMatrixType matrixType, String fileName, int sourceSectionId) {
+    public static FileTransferReady message(Position position, CholeskyMatrixType matrixType, String fileName, int sourceSectionId) {
         return new FileTransferReady(position, matrixType, fileName, sourceSectionId);
     }
 
@@ -32,7 +33,7 @@ public class FileTransferReady implements Serializable, Message {
         return fileName;
     }
 
-    public BlockMatrixType getMatrixType() {
+    public CholeskyMatrixType getMatrixType() {
         return matrixType;
     }
 

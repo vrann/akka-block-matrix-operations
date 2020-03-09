@@ -9,14 +9,22 @@ import akka.japi.pf.ReceiveBuilder;
 import com.vrann.actormatrix.ActorSelfReference;
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.actor.BlockActor;
+import com.vrann.actormatrix.block.state.BlockMatrixState;
 import com.vrann.actormatrix.block.state.StateManagement;
+import com.vrann.actormatrix.cholesky.CholeskyEvent;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 import com.vrann.actormatrix.cholesky.handler.HandlerFactory;
 import com.vrann.actormatrix.cholesky.message.*;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
 import com.vrann.actormatrix.cholesky.handler.BlockMatrixDataAvailableHandler;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static com.vrann.actormatrix.cholesky.CholeskyBlockState.L11_CALCULATED;
+import static com.vrann.actormatrix.cholesky.CholeskyBlockState.L11_RECEIVED;
+import static com.vrann.actormatrix.cholesky.CholeskyEvent.PROCESSED;
+import static com.vrann.actormatrix.cholesky.CholeskyEvent.RECEIVED;
+import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.*;
 
 public class DiagonalBlock implements Block {
 
@@ -37,6 +45,27 @@ public class DiagonalBlock implements Block {
         this.stateMachine = stateMachine;
     }
 
+    private BlockMatrixState<CholeskyMatrixType, CholeskyEvent> createStateMachine() {
+        return BlockMatrixState
+                .<CholeskyMatrixType, CholeskyEvent>expected(L11, Position.fromCoordinates(1, 1))
+                .expected(L11, Position.fromCoordinates(2, 2))
+                .expected(L11, Position.fromCoordinates(3, 3))
+                .expected(L11, Position.fromCoordinates(0, 0))
+        .when(L11, RECEIVED)
+                .all() //.one(Position) //set(List<Positions>)
+                .setState(L11, L11_RECEIVED) //run(Consumer<>)
+        .onCondition(
+                (new BlockMatrixState.Condition<>(L11, RECEIVED)).one(),
+                (condition, state) -> {
+                    System.out.println("l11 received");
+                }
+        )
+        .when(L11, PROCESSED)
+                .all() //.one(Position) //set(List<Positions>)
+                .setState(L11, L11_CALCULATED) //run(Consumer<>)
+        .build();
+    }
+
     @Override
     public String getName()
     {
@@ -52,9 +81,9 @@ public class DiagonalBlock implements Block {
     public List<String> getSubscriptions()
     {
         return Arrays.asList(
-                A11MatrixDataAvailable.generateTopic(position, BlockMatrixType.A11),
-                aMNMatrixDataAvailable.generateTopic(position, BlockMatrixType.aMN),
-                A11MatrixDataAvailable.generateTopic(position, BlockMatrixType.L21)
+                A11MatrixDataAvailable.generateTopic(position, A11),
+                aMNMatrixDataAvailable.generateTopic(position, aMN),
+                A11MatrixDataAvailable.generateTopic(position, L21)
         );
     }
 
@@ -65,22 +94,23 @@ public class DiagonalBlock implements Block {
 
     @Override
     public AbstractActor.Receive getReceive(LoggingAdapter log, ActorSelfReference selfReference, ActorSystem system) {
+        BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine = createStateMachine();
         return ReceiveBuilder.create()
                 .match(A11MatrixDataAvailable.class, message -> {
                     BlockMatrixDataAvailableHandler<A11MatrixDataAvailable> handler = factory.getHandler(
-                            BlockMatrixType.A11, stateMachine
+                            A11, stateMachine
                     );
                     handler.handle(message, position, sectionId, selfReference.getSelfInstance());
                 })
                 .match(aMNMatrixDataAvailable.class, message -> {
                     BlockMatrixDataAvailableHandler<aMNMatrixDataAvailable> handler = factory.getHandler(
-                            BlockMatrixType.aMN, stateMachine
+                            aMN, stateMachine
                     );
                     handler.handle(message, position, sectionId, selfReference.getSelfInstance());
                 })
                 .match(L21MatrixDataAvailable.class, message -> {
                     BlockMatrixDataAvailableHandler<L21MatrixDataAvailable> handler = factory.getHandler(
-                            BlockMatrixType.L21, stateMachine
+                            L21, stateMachine
                     );
                     handler.handle(message, position, sectionId, selfReference.getSelfInstance());
                 })

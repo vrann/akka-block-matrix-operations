@@ -5,22 +5,27 @@ import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.BlockMatrixAction;
 import com.vrann.actormatrix.Position;
+import com.vrann.actormatrix.block.state.BlockMatrixState;
 import com.vrann.actormatrix.block.state.StateManagement;
+import com.vrann.actormatrix.cholesky.CholeskyEvent;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 import com.vrann.actormatrix.cholesky.message.A11MatrixDataAvailable;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
+
+import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.A11;
 
 public class A11MatrixDataAvailableHandler implements BlockMatrixDataAvailableHandler<A11MatrixDataAvailable> {
 
     private LoggingAdapter log;
     private ActorRef mediator;
     private ActorMaterializer materializer;
-    private final StateManagement stateMachine;
+    private final BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine;
 
     public A11MatrixDataAvailableHandler(
             LoggingAdapter log,
             ActorRef mediator,
             ActorMaterializer materializer,
-            StateManagement stateMachine
+            BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine
     ) {
         this.log = log;
         this.mediator = mediator;
@@ -30,6 +35,7 @@ public class A11MatrixDataAvailableHandler implements BlockMatrixDataAvailableHa
 
     public void handle(A11MatrixDataAvailable message, Position position, int sectionId, ActorRef selfReference) {
         log.info("Received A11MatrixDataAvailable message {}", message);
+        stateMachine.triggerEvent(CholeskyEvent.RECEIVED, A11, position);
 //        stateMachine.inform(BlockMatrixAction.RECEIVE, message);
 //        stateMachine.inform(BlockMatrixAction.PROCESS, message);
         /*if (message.getPosition().getX() != position.getX()

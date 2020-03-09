@@ -1,20 +1,12 @@
 package com.vrann.actormatrix.cholesky;
 
-import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.cluster.pubsub.DistributedPubSub;
 import akka.cluster.pubsub.DistributedPubSubMediator;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
-import akka.stream.ActorMaterializer;
-import akka.stream.javadsl.Sink;
 import akka.testkit.javadsl.TestKit;
-import akka.util.ByteString;
 import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigSyntax;
 import com.vrann.actormatrix.*;
 import com.vrann.actormatrix.block.BlockFactory;
+import com.vrann.actormatrix.block.BlockMatrixType;
 import com.vrann.actormatrix.cholesky.handler.HandlerFactory;
 import com.vrann.actormatrix.filetransfer.message.FileTransfer;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
@@ -24,8 +16,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.concurrent.Callable;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 
@@ -84,7 +74,7 @@ public class CholeskyIntegrationTest {
 
     private void sendMessage(int x, int y, int sectionId) {
         String filename = String.format("matrix-aMN-%d-%d.bin", x, y);
-        BlockMatrixType type = x == y ? BlockMatrixType.A11 : BlockMatrixType.aMN;
+        CholeskyMatrixType type = x == y ? CholeskyMatrixType.A11 : CholeskyMatrixType.aMN;
         context.getMediator().tell(new DistributedPubSubMediator.Publish(
                 FileTransferReady.getTopic(Position.fromCoordinates(x, y)),
                 FileTransferReady.message(

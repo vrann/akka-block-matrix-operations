@@ -2,7 +2,6 @@ package com.vrann.actormatrix;
 
 import akka.actor.*;
 import akka.cluster.pubsub.DistributedPubSub;
-import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Sink;
@@ -11,6 +10,7 @@ import akka.util.ByteString;
 import com.typesafe.config.ConfigFactory;
 import com.vrann.actormatrix.block.BlockFactory;
 import com.vrann.actormatrix.cholesky.CholeskyIntegrationTest;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 import com.vrann.actormatrix.cholesky.handler.HandlerFactory;
 import com.vrann.actormatrix.filetransfer.actor.FileTransferRequesterActor;
 import com.vrann.actormatrix.filetransfer.actor.FileTransferSenderActor;
@@ -18,7 +18,7 @@ import com.vrann.actormatrix.filetransfer.handler.FileTransferReadyHandler;
 import com.vrann.actormatrix.filetransfer.handler.FileTransferRequestHandler;
 import com.vrann.actormatrix.filetransfer.message.FileTransfer;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -105,7 +105,7 @@ class FileTransferRequesterActorTest {
 
                 requester.tell(new FileTransferReady(
                         Position.fromCoordinates(0, 0),
-                        BlockMatrixType.aMN, "data-0-0.dat", 2), probe.getRef());
+                        CholeskyMatrixType.aMN, "data-0-0.dat", 2), probe.getRef());
 
                 within(
                         Duration.ofSeconds(3),

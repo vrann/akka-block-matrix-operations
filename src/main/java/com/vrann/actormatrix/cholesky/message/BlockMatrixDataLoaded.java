@@ -2,19 +2,21 @@ package com.vrann.actormatrix.cholesky.message;
 
 import com.vrann.actormatrix.Message;
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 
 import java.io.File;
-import java.io.Serializable;
+
+import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.A11;
 
 public class BlockMatrixDataLoaded implements Message {
 
     private final File filePath;
     private final int sectionId;
-    private final BlockMatrixType matrixType;
+    private final CholeskyMatrixType matrixType;
     private final Position position;
 
-    public BlockMatrixDataLoaded(Position position, BlockMatrixType matrixType, File filePath, int sectionId) {
+    public BlockMatrixDataLoaded(Position position, CholeskyMatrixType matrixType, File filePath, int sectionId) {
         this.filePath = filePath;
         this.sectionId = sectionId; //we need this section id in order to tell where to look for the file for; Section Manager won't help here
         this.position = position;
@@ -25,7 +27,7 @@ public class BlockMatrixDataLoaded implements Message {
 
         private static File filePath;
         private static int sectionId;
-        private static BlockMatrixType matrixType;
+        private static CholeskyMatrixType matrixType;
         private static Position position;
 
         public Builder setPosition(Position position) {
@@ -33,7 +35,7 @@ public class BlockMatrixDataLoaded implements Message {
             return this;
         }
 
-        public Builder setBlockMatrixType(BlockMatrixType type) {
+        public Builder setBlockMatrixType(CholeskyMatrixType type) {
             this.matrixType = type;
             return this;
         }
@@ -57,7 +59,7 @@ public class BlockMatrixDataLoaded implements Message {
     }
 
     public static BlockMatrixDataLoaded create(
-            Position position, BlockMatrixType matrixType, File filePath, int sectionId
+            Position position, CholeskyMatrixType matrixType, File filePath, int sectionId
     ) {
         return new BlockMatrixDataLoaded(position, matrixType, filePath, sectionId);
     }

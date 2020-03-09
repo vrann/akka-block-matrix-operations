@@ -2,7 +2,7 @@ package archive.message;
 
 import com.vrann.actormatrix.Message;
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
 
 import java.io.Serializable;
 

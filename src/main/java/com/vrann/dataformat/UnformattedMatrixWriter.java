@@ -1,7 +1,7 @@
 package com.vrann.dataformat;
 
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
 import org.apache.spark.ml.linalg.Matrix;
 
 import java.io.*;

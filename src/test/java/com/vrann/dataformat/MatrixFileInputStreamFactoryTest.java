@@ -1,7 +1,8 @@
 package com.vrann.dataformat;
 
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -18,7 +19,7 @@ class MatrixFileInputStreamFactoryTest {
     @org.junit.jupiter.api.Test
     void createMatrixBlockInputStream() {
         try {
-            DataInputStream is = testFactory.createMatrixBlockInputStream(new Position(0, 0), BlockMatrixType.L11);
+            DataInputStream is = testFactory.createMatrixBlockInputStream(new Position(0, 0), CholeskyMatrixType.L11);
             byte[] bufLengthInt = new byte[is.available()];
             is.readFully(bufLengthInt);
             assertEquals("test", new String(bufLengthInt));

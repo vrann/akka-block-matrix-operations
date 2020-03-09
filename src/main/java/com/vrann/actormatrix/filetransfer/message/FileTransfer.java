@@ -3,20 +3,21 @@ package com.vrann.actormatrix.filetransfer.message;
 import akka.stream.SourceRef;
 import akka.util.ByteString;
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.cholesky.BlockMatrixType;
+import com.vrann.actormatrix.block.BlockMatrixType;
 import com.vrann.actormatrix.Message;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 
 import java.io.Serializable;
 
 public class FileTransfer implements Serializable, Message {
     private final SourceRef<ByteString> sourceRef;
     private final String fileName;
-    private final BlockMatrixType matrixType;
+    private final CholeskyMatrixType matrixType;
     private final Position position;
 
     public FileTransfer(
         String fileName,
-        BlockMatrixType matrixType,
+        CholeskyMatrixType matrixType,
         Position position,
         SourceRef<ByteString> sourceRef
     ) {
@@ -30,7 +31,7 @@ public class FileTransfer implements Serializable, Message {
         return fileName;
     }
 
-    public BlockMatrixType getMatrixType() {
+    public CholeskyMatrixType getMatrixType() {
         return matrixType;
     }
 

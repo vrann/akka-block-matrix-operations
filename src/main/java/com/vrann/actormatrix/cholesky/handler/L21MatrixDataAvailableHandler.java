@@ -4,21 +4,27 @@ import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.Position;
+import com.vrann.actormatrix.block.state.BlockMatrixState;
 import com.vrann.actormatrix.block.state.StateManagement;
+import com.vrann.actormatrix.cholesky.CholeskyEvent;
+import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 import com.vrann.actormatrix.cholesky.message.L21MatrixDataAvailable;
+
+import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.A11;
+import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.L21;
 
 public class L21MatrixDataAvailableHandler implements BlockMatrixDataAvailableHandler<L21MatrixDataAvailable> {
 
     private LoggingAdapter log;
     private ActorRef mediator;
     private ActorMaterializer materializer;
-    private final StateManagement stateMachine;
+    private final BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine;
 
     public L21MatrixDataAvailableHandler(
             LoggingAdapter log,
             ActorRef mediator,
             ActorMaterializer materializer,
-            StateManagement stateMachine
+            BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine
     ) {
         this.log = log;
         this.mediator = mediator;
@@ -28,6 +34,7 @@ public class L21MatrixDataAvailableHandler implements BlockMatrixDataAvailableHa
 
     public void handle(L21MatrixDataAvailable message, Position position, int sectionId, ActorRef selfReference) {
         log.info("Received L21MatrixDataAvailable message {}", message);
+        stateMachine.triggerEvent(CholeskyEvent.RECEIVED, L21, position);
         /*if (message.getPosition().getX() != position.getX()
                 || message.getPosition().getY() != position.getY()
         ) {

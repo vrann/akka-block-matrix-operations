@@ -1,10 +1,10 @@
 package com.vrann.actormatrix.block.state;
 
-import com.vrann.actormatrix.block.Block;
+import com.vrann.actormatrix.cholesky.CholeskyBlockState;
+import com.vrann.actormatrix.cholesky.message.BlockMatrixDataAvailable;
 import com.vrann.actormatrix.cholesky.message.BlockMatrixMessage;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public /**
@@ -19,38 +19,44 @@ public /**
 
 class StateManagement {
 
-    private final Map<StateEvent, StateEventHandler<BlockMatrixMessage>> handlers = new HashMap<>();
-    private final List<Consumer<EnumSet<BlockState>>> stateChangeListeners = new ArrayList<>();
-    private final List<Consumer<BlockState>> completionListeners = new ArrayList<>();
-    private EnumSet<BlockState> currentState;
-    private final Map<String, StateEventHandler<?>> stateEventHandlers;
+    private final Map<StateEvent, StateEventHandler<?>> handlers = new HashMap<>();
+    private final List<Consumer<EnumSet<CholeskyBlockState>>> stateChangeListeners = new ArrayList<>();
+    private final List<Consumer<CholeskyBlockState>> completionListeners = new ArrayList<>();
+    private EnumSet<CholeskyBlockState> currentState = EnumSet.of(CholeskyBlockState.INIT);
+    private final Map<Class<? extends BlockMatrixMessage>, StateEventHandler<?>> stateEventHandlers;
 
-    private StateManagement(Map<String, StateEventHandler<?>> stateEventHandlers) {
+    private StateManagement(Map<Class<? extends BlockMatrixMessage>, StateEventHandler<?>> stateEventHandlers) {
         this.stateEventHandlers = stateEventHandlers;
     }
 
-    public void triggerEvent(StateEvent event, BlockMatrixMessage message) {
-        handlers.get(event).triggerEvent(event, message);
+    public <T extends Enum> void triggerEvent(T event, T message) {
+        if (stateEventHandlers.containsKey(message.getClass())) {
+//            ((StateEventHandler<T>)stateEventHandlers.get(message.getClass())).triggerEvent(event, message);
+        }
     }
 
-    public void evaluateState(String handlerName, HandlerState state) {
+    public EnumSet<CholeskyBlockState> getState() {
+        return currentState;
+    }
+
+    private void evaluateState(String handlerName, HandlerState state) {
         boolean stateChanged = false;
         switch (handlerName) {
             case "L11":
                 if (state.equals(HandlerState.RECEIVED)) {
-                    currentState.add(BlockState.L11_RECEIVED);
+                    currentState.add(CholeskyBlockState.L11_RECEIVED);
                     stateChanged = true;
                 } else if (state.equals(HandlerState.COMPLETE)) {
-                    currentState.add(BlockState.L11_CALCULATED);
+                    currentState.add(CholeskyBlockState.L11_CALCULATED);
                     stateChanged = true;
                 }
                 break;
             case "L21":
                 if (state.equals(HandlerState.RECEIVED)) {
-                    currentState.add(BlockState.L21_ALL_RECEIVED);
+                    currentState.add(CholeskyBlockState.L21_ALL_RECEIVED);
                     stateChanged = true;
                 } else if (state.equals(HandlerState.COMPLETE)) {
-                    currentState.add(BlockState.L21_CALCULATED);
+                    currentState.add(CholeskyBlockState.L21_CALCULATED);
                     stateChanged = true;
                 }
                 break;
@@ -68,15 +74,15 @@ class StateManagement {
                 (BlockState.L11_RECEIVED, BlockState.L21_CALCULATED), CholeskyMatrixHandlerState.L11,  HandlerState.COMPLETE, BlockState.L11_CALCULATED
     }*/
 
-    public void onStateChange(Consumer<EnumSet<BlockState>> f) {
+    public void onStateChange(Consumer<EnumSet<CholeskyBlockState>> f) {
         stateChangeListeners.add(f);
     }
 
-    public void onComplete(Consumer<BlockState> consumer) {
+    public void onComplete(Consumer<CholeskyBlockState> consumer) {
         completionListeners.add(consumer);
     }
 
-    void registerEventHandler(StateEvent event, StateEventHandler handler) {
+    private void registerEventHandler(StateEvent event, StateEventHandler<Enum> handler) {
         handler.onStateChange(this::evaluateState);
         handlers.put(event, handler);
     }
@@ -92,8 +98,8 @@ class StateManagement {
 //    }
 
     private void complete() {
-        for (Consumer listener: completionListeners) {
-            listener.accept(BlockState.COMPLETE);
+        for (Consumer<CholeskyBlockState> listener : completionListeners) {
+            listener.accept(CholeskyBlockState.COMPLETE);
         }
     }
 
@@ -107,10 +113,10 @@ class StateManagement {
 
     public static class Builder {
 
-        private final Map<String, StateEventHandler<?>> stateEventHandlers = new HashMap<>();
+        private final Map<Class<? extends BlockMatrixMessage>, StateEventHandler<? extends Enum>> stateEventHandlers = new HashMap<>();
 
-        public Builder addSateHandler(StateEventHandler<?> eventHandler) {
-            stateEventHandlers.put(eventHandler.getName(), eventHandler);
+        public <T extends BlockMatrixMessage> Builder addSateHandler(Class<T> type, StateEventHandler<? extends Enum> eventHandler) {
+            stateEventHandlers.put(type, eventHandler);
             return this;
         }
 
