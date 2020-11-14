@@ -1,27 +1,24 @@
 package com.vrann.actormatrix.block.state;
 
 import com.vrann.actormatrix.Position;
-import com.vrann.actormatrix.block.BlockMatrixType;
-import com.vrann.actormatrix.block.BlockState;
-import com.vrann.actormatrix.block.BlockStateDefault;
+import com.vrann.actormatrix.block.*;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixStateEvent> {
+public class BlockMatrixState<T extends BlockMatrixType> {
 
     private BlockState state = BlockStateDefault.INIT;
-    private HashMap<T, Set<Position>> expected;
-    private HashMap<T, HashMap<E, List<Position>>> received = new HashMap<>();
-    private HashMap<T, List<Condition<T, E>>> conditions;
-    private final HashMap<Condition<T, E>, List<BiConsumer<Condition<T, E>, BlockMatrixState<T, E>>>>
+    private HashMap<T, Set<EventContext>> expected;
+    private HashMap<T, HashMap<BlockMatrixStateEvent, List<EventContext>>> received = new HashMap<>();
+    private HashMap<T, List<Condition<T>>> conditions;
+    private final HashMap<Condition<T>, List<Consumer<BlockMatrixStateEvent>>>
             conditionHandlers;
 
     private BlockMatrixState(
-            HashMap<T, Set<Position>> expected,
-            HashMap<T, List<Condition<T, E>>> conditions,
-            HashMap<Condition<T, E>, List<BiConsumer<Condition<T, E>, BlockMatrixState<T, E>>>>
+            HashMap<T, Set<EventContext>> expected,
+            HashMap<T, List<Condition<T>>> conditions,
+            HashMap<Condition<T>, List<Consumer<BlockMatrixStateEvent>>>
                     conditionHandlers
     ) {
         this.expected = expected;
@@ -29,12 +26,19 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
         this.conditionHandlers = conditionHandlers;
     }
 
-    public void triggerEvent(E event, T matrixType, Position position) {
-        if (!expected.containsKey(matrixType) || !expected.get(matrixType).contains(position)) {
+    public void expect(T matrixType, EventContext position) {
+        if (!expected.containsKey(matrixType)) {
+            expected.put(matrixType, new HashSet<>());
+        }
+        expected.get(matrixType).add(position);
+    }
+
+    public void triggerEvent(BlockMatrixStateEvent event, T matrixType, EventContext eventContext) {
+        if (!expected.containsKey(matrixType) || !expected.get(matrixType).contains(eventContext)) {
             throw new RuntimeException(String.format(
                     "Matrix block %s at position %s is not expected",
                     matrixType,
-                    position));
+                    eventContext));
         }
 
         if (!received.containsKey(matrixType)) {
@@ -43,17 +47,20 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
         if (!received.get(matrixType).containsKey(event)) {
             received.get(matrixType).put(event, new ArrayList<>());
         }
-        received.get(matrixType).get(event).add(position);
+        received.get(matrixType).get(event).add(eventContext);
         //conditions.get(matrixType).receivedEvent(position);
 
-        for (Condition<T, E> condition: conditions.get(matrixType)) {
-            condition.evaluate(this);
+        if (conditions.containsKey(matrixType)) {
+            for (Condition<T> condition: conditions.get(matrixType)) {
+                condition.evaluate(this);
+            }
         }
-        for (Condition<T, E> condition: conditionHandlers.keySet()) {
+
+        for (Condition<T> condition: conditionHandlers.keySet()) {
             if (condition.evaluate(this)) {
                 if (conditionHandlers.containsKey(condition)) {
                     conditionHandlers.get(condition).forEach((consumer) -> {
-                        consumer.accept(condition, this);
+                        consumer.accept(event);
                     });
                 }
             }
@@ -70,13 +77,13 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
     }
 
 
-    public static class TransitionRulesBuilder<T extends BlockMatrixType,  E extends BlockMatrixStateEvent> {
+    public static class TransitionRulesBuilder<T extends BlockMatrixType> {
 
-        private Condition<T, E> lastActiveCondition;
-        private HashMap<T, List<Condition<T, E>>> conditions = new HashMap<>();
+        private Condition<T> lastActiveCondition;
+        private HashMap<T, List<Condition<T>>> conditions = new HashMap<>();
         private static TransitionRulesBuilder builderInstance;
-        private HashMap<T, Set<Position>> expected = new HashMap<>();
-        private final HashMap<Condition<T, E>, List<BiConsumer<Condition<T, E>, BlockMatrixState<T, E>>>>
+        private HashMap<T, Set<EventContext>> expected = new HashMap<>();
+        private final HashMap<Condition<T>, List<Consumer<BlockMatrixStateEvent>>>
                 conditionHandlers = new HashMap<>();
 
 
@@ -84,7 +91,7 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
 
         }
 
-        public TransitionRulesBuilder<T, E> expected(T matrixType, Position position) {
+        public TransitionRulesBuilder<T> expected(T matrixType, EventContext position) {
             if (!expected.containsKey(matrixType)) {
                 expected.put(matrixType, new HashSet<>());
             }
@@ -92,21 +99,19 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
             return this;
         }
 
-        static <L extends BlockMatrixType, M extends BlockMatrixStateEvent> TransitionRulesBuilder<L, M> newInstance() {
+        static <L extends BlockMatrixType> TransitionRulesBuilder<L> newInstance() {
             return new TransitionRulesBuilder<>();
         }
 
-        void addCondition(Condition<T, E> condition) {
+        void addCondition(Condition<T> condition) {
             if (lastActiveCondition != null && !lastActiveCondition.isSetUp()) {
                 throw new RuntimeException("Finish setting up condition first");
             }
             lastActiveCondition = condition;
         }
 
-        public TransitionRulesBuilder<T, E> setState(T matrixType, BlockState newState) {
-            lastActiveCondition.onComplete((blockMatrixState) -> {
-                blockMatrixState.setState(newState);
-            });
+        public TransitionRulesBuilder<T> setState(T matrixType, BlockState newState) {
+            lastActiveCondition.onComplete((blockMatrixState) -> blockMatrixState.setState(newState));
 
             if (lastActiveCondition.isSetUp()) {
                 if (!conditions.containsKey(matrixType)) {
@@ -118,8 +123,8 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
             return this;
         }
 
-        public TransitionRulesBuilder<T, E> onCondition(
-                Condition<T, E> condition, BiConsumer<Condition<T, E>, BlockMatrixState<T, E>> handler
+        public TransitionRulesBuilder<T> onCondition(
+              Condition<T> condition, Consumer<BlockMatrixStateEvent> handler
         ) {
             if (!conditionHandlers.containsKey(condition)) {
                 conditionHandlers.put(condition, new ArrayList<>());
@@ -128,57 +133,71 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
             return this;
         }
 
-        public BlockMatrixState<T, E> build() {
+        public BlockMatrixState<T> build() {
             return new BlockMatrixState<>(expected, conditions, conditionHandlers);
         }
 
-        public TransitionRulesBuilder<T, E> when(T matrixType, E event) {
-            Condition<T, E> condition = new Condition<>(matrixType, event);
+        public TransitionRulesBuilder<T> when(T matrixType, BlockMatrixStateEvent event) {
+            Condition<T> condition = new Condition<>(matrixType, event);
             this.addCondition(condition);
             return this;
         }
 
-        public TransitionRulesBuilder<T, E> all() {
+        public TransitionRulesBuilder<T> all() {
             lastActiveCondition.all();
             return this;
         }
 
-        public TransitionRulesBuilder<T, E> one() {
+        public TransitionRulesBuilder<T> one() {
             lastActiveCondition.one();
             return this;
         }
     }
 
 
-    public static class Condition<T extends BlockMatrixType, E extends BlockMatrixStateEvent> {
+    public static class Condition<T extends BlockMatrixType> {
 
         private enum ConditionType {
             ALL,
-            ONE
+            ONE,
+            EACH
+        }
+
+        public T getMatrixType() {
+            return matrixType;
+        }
+
+        public BlockMatrixStateEvent getEvent() {
+            return event;
         }
 
         private T matrixType;
-        private E event;
+        private BlockMatrixStateEvent event;
         private boolean isSetUp = false;
-        private List<Consumer<BlockMatrixState<T, E>>> handlers = new ArrayList<>();
+        private List<Consumer<BlockMatrixState<T>>> handlers = new ArrayList<>();
         private ConditionType currentCondition;
 
-        public Condition(T matrixType, E event) {
+        public Condition(T matrixType, BlockMatrixStateEvent event) {
             this.matrixType = matrixType;
             this.event = event;
         }
 
-        public Condition<T, E> all() {
+        public Condition<T> all() {
             currentCondition = Condition.ConditionType.ALL;
             return this;
         }
 
-        public Condition<T, E> one() {
+        public Condition<T> one() {
             currentCondition = Condition.ConditionType.ONE;
             return this;
         }
 
-        void onComplete(Consumer<BlockMatrixState<T, E>> handler) {
+        public Condition<T> each() {
+            currentCondition = Condition.ConditionType.EACH;
+            return this;
+        }
+
+        void onComplete(Consumer<BlockMatrixState<T>> handler) {
             handlers.add(handler);
             isSetUp = true;
         }
@@ -187,21 +206,21 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
             return isSetUp;
         }
 
-        boolean evaluate(BlockMatrixState<T, E> state) {
-            Set<Position> expectations = state.expected.get(matrixType);
+        boolean evaluate(BlockMatrixState<T> state) {
+            Set<EventContext> expectations = state.expected.get(matrixType);
             if (!state.received.containsKey(matrixType)) {
                 return false;
             }
-            List<Position> received = state.received.get(matrixType).get(event);
+            List<EventContext> received = state.received.get(matrixType).get(event);
             if (received == null) {
                 return false;
             }
             if (currentCondition == ConditionType.ALL && expectations.size() == received.size()) {
-                for (Consumer<BlockMatrixState<T, E>> handler: handlers) {
+                for (Consumer<BlockMatrixState<T>> handler: handlers) {
                     handler.accept(state);
                 }
-            } else if (currentCondition == ConditionType.ONE && received.size() >= 1) {
-                for (Consumer<BlockMatrixState<T, E>> handler: handlers) {
+            } else if ((currentCondition == ConditionType.EACH || currentCondition == ConditionType.ONE) && received.size() >= 1) {
+                for (Consumer<BlockMatrixState<T>> handler: handlers) {
                     handler.accept(state);
                 }
             }
@@ -209,10 +228,16 @@ public class BlockMatrixState<T extends BlockMatrixType, E extends BlockMatrixSt
         }
     }
 
-    public static <L extends BlockMatrixType, M extends BlockMatrixStateEvent> TransitionRulesBuilder<L, M> expected(
+    public static <L extends BlockMatrixType> TransitionRulesBuilder<L> getBuilder()
+    {
+        TransitionRulesBuilder<L> builder = TransitionRulesBuilder.newInstance();
+        return builder;
+    }
+
+    public static <L extends BlockMatrixType> TransitionRulesBuilder<L> expected(
             L matrixType, Position position)
     {
-        TransitionRulesBuilder<L, M> builder = TransitionRulesBuilder.newInstance();
+        TransitionRulesBuilder<L> builder = getBuilder();
         builder.expected(matrixType, position);
         return builder;
     }

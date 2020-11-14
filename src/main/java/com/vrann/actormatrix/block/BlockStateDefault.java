@@ -1,6 +1,9 @@
 package com.vrann.actormatrix.block;
 
-public enum BlockStateDefault implements BlockState {
+import com.vrann.actormatrix.block.state.BlockMatrixStateEvent;
+
+public enum BlockStateDefault implements BlockState, BlockMatrixStateEvent {
     INIT,
-    COMPLETE
+    COMPLETE,
+    SUBSCRIBED
 }

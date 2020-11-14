@@ -10,6 +10,7 @@ import akka.japi.pf.ReceiveBuilder;
 import com.vrann.actormatrix.*;
 import com.vrann.actormatrix.actor.BlockActor;
 import com.vrann.actormatrix.block.Block;
+import com.vrann.actormatrix.block.BlockState;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
 import com.vrann.actormatrix.filetransfer.message.FileTransferRequest;
 
@@ -51,6 +52,11 @@ public class SubdiagonalBlockElement implements Block {
     @Override
     public Position getPosition() {
         return position;
+    }
+
+    @Override
+    public BlockState status() {
+        return null;
     }
 
     public AbstractActor.Receive getReceive(LoggingAdapter log, ActorSelfReference selfReference, ActorSystem system)

@@ -3,17 +3,9 @@ package com.vrann.actormatrix.block.state;
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.block.BlockStateDefault;
 import com.vrann.actormatrix.cholesky.CholeskyBlockState;
-import com.vrann.actormatrix.cholesky.CholeskyEvent;
 import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
-import com.vrann.actormatrix.cholesky.message.L11MatrixDataAvailable;
-import com.vrann.actormatrix.cholesky.message.L21MatrixDataAvailable;
 import org.junit.jupiter.api.Test;
-
-import java.io.File;
-import java.util.EnumSet;
-
-//import static com.vrann.actormatrix.block.BlockMatrixType.L11;
-//import static com.vrann.actormatrix.cholesky.CholeskyBlockState.*;
+import static com.vrann.actormatrix.block.BlockStateDefault.COMPLETE;
 import static com.vrann.actormatrix.cholesky.CholeskyBlockState.*;
 import static com.vrann.actormatrix.cholesky.CholeskyEvent.PROCESSED;
 import static com.vrann.actormatrix.cholesky.CholeskyEvent.RECEIVED;
@@ -94,9 +86,9 @@ enum ExpectationType {
 
     @Test
     void testBlockState3x3_0_0() {
-        BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateManagement =
+        BlockMatrixState<CholeskyMatrixType> stateManagement =
                 BlockMatrixState
-                .<CholeskyMatrixType, CholeskyEvent>expected(A11, Position.fromCoordinates(0, 0))
+                .expected(A11, Position.fromCoordinates(0, 0))
                 .when(A11, RECEIVED)
                     .one() //.one(Position) //set(List<Positions>)
                     .setState(A11, A11_RECEIVED) //run(Consumer<>)
@@ -114,14 +106,14 @@ enum ExpectationType {
 
     @Test
     void testBlockState3x3_0_1() {
-        BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateManagement =
-                BlockMatrixState.<CholeskyMatrixType, CholeskyEvent>expected(L11, Position.fromCoordinates(0, 0))
+        BlockMatrixState<CholeskyMatrixType> stateManagement =
+                BlockMatrixState.expected(L11, Position.fromCoordinates(0, 0))
                 .when(L11, RECEIVED)
                 .all() //.one(Position) //set(List<Positions>)
                 .setState(L11, L11_RECEIVED) //run(Consumer<>)
                 .onCondition(
                         (new BlockMatrixState.Condition<>(L11, RECEIVED)).all(),
-                        (condition, state) -> {
+                        (event) -> {
                             System.out.println("all received");
                         }
                 )
@@ -139,8 +131,8 @@ enum ExpectationType {
 
     @Test
     void testBlockStateException() {
-        BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateManagement =
-                BlockMatrixState.<CholeskyMatrixType, CholeskyEvent>expected(L11, Position.fromCoordinates(0, 0))
+        BlockMatrixState<CholeskyMatrixType> stateManagement =
+                BlockMatrixState.expected(L11, Position.fromCoordinates(0, 0))
                         .build();
 
         assertEquals(BlockStateDefault.INIT, stateManagement.getState());
@@ -192,8 +184,8 @@ enum ExpectationType {
         }
         TestInvoked testInvoked = new TestInvoked();
 
-        BlockMatrixState.TransitionRulesBuilder<CholeskyMatrixType, CholeskyEvent> stateManagement = BlockMatrixState
-                .<CholeskyMatrixType, CholeskyEvent>expected(L11, Position.fromCoordinates(1, 1))
+        BlockMatrixState.TransitionRulesBuilder<CholeskyMatrixType> stateManagement = BlockMatrixState
+                .expected(L11, Position.fromCoordinates(1, 1))
                 .expected(L11, Position.fromCoordinates(2, 2))
                 .expected(L11, Position.fromCoordinates(3, 3))
                 .expected(L11, Position.fromCoordinates(0, 0));
@@ -205,12 +197,12 @@ enum ExpectationType {
 
         stateManagement.onCondition(
                 (new BlockMatrixState.Condition<>(L11, RECEIVED)).one(),
-                (condition, state) -> {
+                (event) -> {
                     System.out.println("l11 received");
                 }
         );
 
-        BlockMatrixState<CholeskyMatrixType, CholeskyEvent> blockMatrixState = stateManagement
+        BlockMatrixState<CholeskyMatrixType> blockMatrixState = stateManagement
                 .when(L11, PROCESSED)
                 .all() //.one(Position) //set(List<Positions>)
                 .setState(L11, L11_CALCULATED) //run(Consumer<>)

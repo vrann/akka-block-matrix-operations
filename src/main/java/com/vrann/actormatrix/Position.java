@@ -1,9 +1,10 @@
 package com.vrann.actormatrix;
 
+import com.vrann.actormatrix.block.EventContext;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Position implements Serializable {
+public class Position implements Serializable, EventContext {
 
     private int x;
     private int y;

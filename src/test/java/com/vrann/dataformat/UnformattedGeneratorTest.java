@@ -21,8 +21,8 @@ class UnformattedGeneratorTest {
     void writeThenReadMatrix(@TempDir Path tempDir) throws FileNotFoundException, IOException {
         final File filePath = new File("/Users/etulika/Projects/akka-block-manager/generated.bin");
 
-        int rowsCount = 7000;
-        int colsCount = 7000;
+        int rowsCount = 70;
+        int colsCount = 70;
         double[] testData = new double[49000000];
         for (int i = 0; i < 49000000; i++) {
             testData[i] = Math.random();

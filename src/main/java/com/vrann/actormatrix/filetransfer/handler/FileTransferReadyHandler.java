@@ -33,10 +33,16 @@ public class FileTransferReadyHandler implements SectionMessageHandler<FileTrans
     ) throws IOException {
         //if message section id is different from the current section id
 
-        log.info("Received FileTransferReady message");
+        log.info("Received FileTransferReady message {}, {}, {}, {}",
+                FileTransferReady.getTopic(message.getPosition()),
+                message.getSourceSectionId(),
+                message.getMatrixType(),
+                message.getPosition()
+        );
 
         if (message.getSourceSectionId() != currentSectionId) {
             String topic = String.format("request-file-transfer-%d", message.getSourceSectionId());
+            log.info("Requesting file transfer {}", topic);
             FileTransferRequest fileTransferRequest = new FileTransferRequest(
                     message.getPosition(),
                     message.getMatrixType(),
@@ -57,7 +63,7 @@ public class FileTransferReadyHandler implements SectionMessageHandler<FileTrans
                     .setPosition(message.getPosition())
                     .setSectionId(currentSectionId)
                     .build();
-            log.info("Notification about available file is sent {}", resultMessage.getTopic());
+            log.info("File exists. Notification about available file is sent {}", resultMessage.getTopic());
             mediator.tell(new DistributedPubSubMediator.Publish(resultMessage.getTopic(), resultMessage),
                     selfReference);
         }

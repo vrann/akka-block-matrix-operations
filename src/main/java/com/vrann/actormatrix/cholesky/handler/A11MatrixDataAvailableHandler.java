@@ -3,14 +3,11 @@ package com.vrann.actormatrix.cholesky.handler;
 import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
-import com.vrann.actormatrix.BlockMatrixAction;
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.block.state.BlockMatrixState;
-import com.vrann.actormatrix.block.state.StateManagement;
 import com.vrann.actormatrix.cholesky.CholeskyEvent;
 import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 import com.vrann.actormatrix.cholesky.message.A11MatrixDataAvailable;
-import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
 
 import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.A11;
 
@@ -19,13 +16,13 @@ public class A11MatrixDataAvailableHandler implements BlockMatrixDataAvailableHa
     private LoggingAdapter log;
     private ActorRef mediator;
     private ActorMaterializer materializer;
-    private final BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine;
+    private final BlockMatrixState<CholeskyMatrixType> stateMachine;
 
     public A11MatrixDataAvailableHandler(
             LoggingAdapter log,
             ActorRef mediator,
             ActorMaterializer materializer,
-            BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine
+            BlockMatrixState<CholeskyMatrixType> stateMachine
     ) {
         this.log = log;
         this.mediator = mediator;

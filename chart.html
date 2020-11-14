@@ -1,0 +1,41 @@
+<html>
+<head>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['bar']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+      var data = google.visualization.arrayToDataTable([
+        ['Розмір матриці', 'Факторизація', 'Передача даних секунд'],
+        ['100x100\nsize 78K', 0.136, 0.015],
+        ['1000x1000\nsize 7.6M', 0.121, 0.064],
+        ['5000x5000\nsize 191M', 0.420, 1.045],
+        ['7000x7000\nsize 374M', 0.859, 1.992],
+        ['10000x10000\nsize 763M', 1.907, 4.112]
+      ]);
+
+      var options = {
+        colors: ['#000000', 'grey'],
+        axes: {
+          x: {
+            0: { side: 'bottom', label: 'Розмір матриці'}
+          },
+          y: {
+            0: { side: 'left', label: 'Час, сек'}
+          }
+        }
+      };
+
+      var chart = new google.charts.Bar(document.getElementById('columnchart_material'));
+
+      chart.draw(data, google.charts.Bar.convertOptions(options));
+
+
+    }
+  </script>
+</head>
+<body>
+<div id="columnchart_material" style="width: 900px; height: 500px;"></div>
+</body>
+</html>

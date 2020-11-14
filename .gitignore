@@ -1,3 +1,5 @@
 .idea
 target
 src/main/*.iml
+.DS_Store
+*.bin

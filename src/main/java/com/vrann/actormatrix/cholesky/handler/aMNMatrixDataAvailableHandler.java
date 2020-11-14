@@ -5,12 +5,10 @@ import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.Position;
 import com.vrann.actormatrix.block.state.BlockMatrixState;
-import com.vrann.actormatrix.block.state.StateManagement;
 import com.vrann.actormatrix.cholesky.CholeskyEvent;
 import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 import com.vrann.actormatrix.cholesky.message.aMNMatrixDataAvailable;
-
-import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.L21;
+import java.util.Objects;
 import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.aMN;
 
 public class aMNMatrixDataAvailableHandler implements BlockMatrixDataAvailableHandler<aMNMatrixDataAvailable> {
@@ -18,18 +16,34 @@ public class aMNMatrixDataAvailableHandler implements BlockMatrixDataAvailableHa
     private LoggingAdapter log;
     private ActorRef mediator;
     private ActorMaterializer materializer;
-    private final BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine;
+    private final BlockMatrixState<CholeskyMatrixType> stateMachine;
 
     public aMNMatrixDataAvailableHandler(
             LoggingAdapter log,
             ActorRef mediator,
             ActorMaterializer materializer,
-            BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine
+            BlockMatrixState<CholeskyMatrixType> stateMachine
     ) {
         this.log = log;
         this.mediator = mediator;
         this.materializer = materializer;
         this.stateMachine = stateMachine;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        aMNMatrixDataAvailableHandler that = (aMNMatrixDataAvailableHandler) o;
+        return Objects.equals(log, that.log) &&
+                Objects.equals(mediator, that.mediator) &&
+                Objects.equals(materializer, that.materializer) &&
+                Objects.equals(stateMachine, that.stateMachine);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(log, mediator, materializer, stateMachine);
     }
 
     public void handle(aMNMatrixDataAvailable message, Position position, int sectionId, ActorRef selfReference) {

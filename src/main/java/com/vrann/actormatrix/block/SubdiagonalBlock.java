@@ -8,23 +8,18 @@ import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import com.vrann.actormatrix.ActorSelfReference;
 import com.vrann.actormatrix.Position;
+import com.vrann.actormatrix.SectionCoordinator;
 import com.vrann.actormatrix.actor.BlockActor;
 import com.vrann.actormatrix.block.state.BlockMatrixState;
-import com.vrann.actormatrix.block.state.StateManagement;
-import com.vrann.actormatrix.cholesky.CholeskyEvent;
 import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
 import com.vrann.actormatrix.cholesky.handler.BlockMatrixDataAvailableHandler;
 import com.vrann.actormatrix.cholesky.handler.HandlerFactory;
 import com.vrann.actormatrix.cholesky.message.A11MatrixDataAvailable;
-import com.vrann.actormatrix.cholesky.message.BlockMatrixDataAvailable;
 import com.vrann.actormatrix.cholesky.message.L21MatrixDataAvailable;
 import com.vrann.actormatrix.cholesky.message.aMNMatrixDataAvailable;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static com.vrann.actormatrix.cholesky.CholeskyBlockState.L11_CALCULATED;
-import static com.vrann.actormatrix.cholesky.CholeskyBlockState.L11_RECEIVED;
+import static com.vrann.actormatrix.cholesky.CholeskyBlockState.*;
+import static com.vrann.actormatrix.cholesky.CholeskyBlockState.L21_CALCULATED;
 import static com.vrann.actormatrix.cholesky.CholeskyEvent.PROCESSED;
 import static com.vrann.actormatrix.cholesky.CholeskyEvent.RECEIVED;
 import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.*;
@@ -34,39 +29,61 @@ public class SubdiagonalBlock implements Block {
     private final Position position;
     private HandlerFactory factory;
     private int sectionId;
-    private StateManagement stateMachine;
+    private final BlockMatrixState<CholeskyMatrixType> stateMachine;
+    private final BlockMatrixState<SectionCoordinator.SectionTypes> sectionStateMachine;
 
     public SubdiagonalBlock(
             HandlerFactory factory,
-            StateManagement stateMachine,
             Position position,
-            int sectionId
-    ) {
+            int sectionId,
+            BlockMatrixState<SectionCoordinator.SectionTypes> sectionStateMachine) {
         this.factory = factory;
         this.position = position;
         this.sectionId = sectionId;
-        this.stateMachine = stateMachine;
+        this.stateMachine = createStateMachine();
+        this.sectionStateMachine = sectionStateMachine;
+        for (var topic: getSubscriptions()) {
+            sectionStateMachine.expect(SectionCoordinator.SectionTypes.TOPIC, new TopicEventContext(topic));
+        }
+        sectionStateMachine.expect(SectionCoordinator.SectionTypes.BLOCK, position);
     }
 
-    private BlockMatrixState<CholeskyMatrixType, CholeskyEvent> createStateMachine() {
-        return BlockMatrixState
-                .<CholeskyMatrixType, CholeskyEvent>expected(L11, Position.fromCoordinates(1, 1))
-                .expected(L11, Position.fromCoordinates(2, 2))
-                .expected(L11, Position.fromCoordinates(3, 3))
-                .expected(L11, Position.fromCoordinates(0, 0))
-                .when(L11, RECEIVED)
+    private BlockMatrixState<CholeskyMatrixType> createStateMachine() {
+        var builder = BlockMatrixState.<CholeskyMatrixType>getBuilder();
+        builder.expected(aMN, position);
+        builder.when(aMN, RECEIVED).one().setState(aMN, DATA_INITIALIZED);
+        for (int i = 0; i < position.getY(); i++) {
+            builder.expected(L21, Position.fromCoordinates(position.getX(), i));
+        }
+        builder.expected(L11, Position.fromCoordinates(position.getY(), position.getY()));
+        builder.when(L11, RECEIVED).one().setState(L11, L11_RECEIVED);
+        builder.when(L21, RECEIVED).all().setState(L21, L21_ALL_RECEIVED);
+        builder.onCondition(
+                (new BlockMatrixState.Condition<>(aMN, RECEIVED)).one(),
+                (event) -> {
+                    System.out.printf("aMN received at positions %s\n", position);
+                }
+        );
+        builder.onCondition(
+                (new BlockMatrixState.Condition<>(L21, RECEIVED)).one(),
+                (event) -> {
+                    System.out.printf("l21 received at positions %s\n", position);
+                }
+        );
+        builder.onCondition(
+                (new BlockMatrixState.Condition<>(L21, RECEIVED)).one(),
+                (event) -> {
+                    System.out.printf("l11 received at positions %s\n", position);
+                }
+        );
+        builder.when(L21, PROCESSED)
                 .all() //.one(Position) //set(List<Positions>)
-                .setState(L11, L11_RECEIVED) //run(Consumer<>)
-                .onCondition(
-                        (new BlockMatrixState.Condition<>(L11, RECEIVED)).one(),
-                        (condition, state) -> {
-                            System.out.println("l11 received");
-                        }
-                )
-                .when(L11, PROCESSED)
-                .all() //.one(Position) //set(List<Positions>)
-                .setState(L11, L11_CALCULATED) //run(Consumer<>)
-                .build();
+                .setState(L21, L21_CALCULATED); //run(Consumer<>)
+        builder.when(L11, PROCESSED)
+                .one() //.one(Position) //set(List<Positions>)
+                .setState(L11, L11_CALCULATED); //run(Consumer<>)
+        return builder.build();
+
     }
 
     @Override
@@ -81,18 +98,13 @@ public class SubdiagonalBlock implements Block {
     }
 
     @Override
-    public List<String> getSubscriptions()
-    {
-        return Arrays.asList(
-                BlockMatrixDataAvailable.generateTopic(position, A11),
-                BlockMatrixDataAvailable.generateTopic(position, aMN),
-                BlockMatrixDataAvailable.generateTopic(position, L21)
-        );
+    public Position getPosition() {
+        return position;
     }
 
     @Override
-    public Position getPosition() {
-        return position;
+    public BlockState status() {
+        return stateMachine.getState();
     }
 
     @Override
@@ -101,19 +113,23 @@ public class SubdiagonalBlock implements Block {
         ReceiveBuilder builder = new ReceiveBuilder();
         return builder
                 .match(A11MatrixDataAvailable.class, message -> {
-                    BlockMatrixDataAvailableHandler<A11MatrixDataAvailable> handler = factory.getHandler(A11, createStateMachine());
+                    BlockMatrixDataAvailableHandler<A11MatrixDataAvailable> handler = factory.getHandler(A11, stateMachine);
                     handler.handle(message, position, sectionId, selfReference.getSelfInstance());
                 })
                 .match(aMNMatrixDataAvailable.class, message -> {
-                    BlockMatrixDataAvailableHandler<aMNMatrixDataAvailable> handler = factory.getHandler(aMN, createStateMachine());
+                    log.info("received message with the topic {}", message.getTopic());
+                    BlockMatrixDataAvailableHandler<aMNMatrixDataAvailable> handler = factory.getHandler(aMN, stateMachine);
                     handler.handle(message, position, sectionId, selfReference.getSelfInstance());
                 })
                 .match(L21MatrixDataAvailable.class, message -> {
-                    BlockMatrixDataAvailableHandler<L21MatrixDataAvailable> handler = factory.getHandler(L21, createStateMachine());
+                    BlockMatrixDataAvailableHandler<L21MatrixDataAvailable> handler = factory.getHandler(L21, stateMachine);
                     handler.handle(message, position, sectionId, selfReference.getSelfInstance());
                 })
                 .match(DistributedPubSubMediator.SubscribeAck.class,
-                        message -> log.info("subscribed to topic {}", message.subscribe().topic())
+                        message -> {
+                            log.info("subscribed to topic {}", message.subscribe().topic());
+                            sectionStateMachine.triggerEvent(SectionCoordinator.MessageStatus.RECEIVED, SectionCoordinator.SectionTypes.TOPIC, TopicEventContext.from(message.subscribe().topic()));
+                        }
                 ).matchAny(message -> {
                     log.info("SubDiagonalBlock received unknown message {}", message.getClass().getName());
                 })

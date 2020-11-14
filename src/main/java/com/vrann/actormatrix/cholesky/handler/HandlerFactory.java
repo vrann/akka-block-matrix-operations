@@ -5,12 +5,8 @@ import akka.event.LoggingAdapter;
 import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.ActorSystemContext;
 import com.vrann.actormatrix.block.state.BlockMatrixState;
-import com.vrann.actormatrix.block.state.StateManagement;
-import com.vrann.actormatrix.block.BlockMatrixType;
 import com.vrann.actormatrix.cholesky.CholeskyEvent;
 import com.vrann.actormatrix.cholesky.CholeskyMatrixType;
-
-import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.*;
 
 public class HandlerFactory {
 
@@ -39,7 +35,7 @@ public class HandlerFactory {
 
     public BlockMatrixDataAvailableHandler getHandler(
             CholeskyMatrixType matrixType,
-            BlockMatrixState<CholeskyMatrixType, CholeskyEvent> stateMachine
+            BlockMatrixState<CholeskyMatrixType> stateMachine
     ) throws Exception {
         switch (matrixType) {
             case A11:

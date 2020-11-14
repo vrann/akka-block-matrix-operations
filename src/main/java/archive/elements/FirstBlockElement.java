@@ -11,6 +11,7 @@ import akka.stream.ActorMaterializer;
 import com.vrann.actormatrix.*;
 import com.vrann.actormatrix.actor.BlockActor;
 import com.vrann.actormatrix.block.Block;
+import com.vrann.actormatrix.block.BlockState;
 import com.vrann.actormatrix.filetransfer.message.FileTransfer;
 import com.vrann.actormatrix.filetransfer.message.FileTransferReady;
 import com.vrann.actormatrix.filetransfer.message.FileTransferRequest;
@@ -50,6 +51,11 @@ public class FirstBlockElement implements Block {
     @Override
     public Position getPosition() {
         return position;
+    }
+
+    @Override
+    public BlockState status() {
+        return null;
     }
 
     public AbstractActor.Receive getReceive(LoggingAdapter log, ActorSelfReference selfReference, ActorSystem system)

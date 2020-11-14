@@ -42,14 +42,13 @@ public class FileTransferSenderActor extends AbstractActor {
         log  = Logging.getLogger(system, system);
         mediator = DistributedPubSub.get(system).mediator();
         this.sectionId = sectionId;
-        log.info("Subscribed request-file-transfer-{}", sectionId);
         this.handler = handler;
-
         log.info("Started FileTransferRequesterActor for section {}", sectionId);
 
         //this should be more specific, requesting the matrix for position
         mediator.tell(new DistributedPubSubMediator.Subscribe(String.format("request-file-transfer-%d", sectionId),
                 getSelf()), getSelf());
+        log.info("Subscribed request-file-transfer-{}", sectionId);
     }
 
     @Override

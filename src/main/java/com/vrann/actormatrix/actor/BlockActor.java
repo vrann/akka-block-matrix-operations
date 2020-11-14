@@ -38,6 +38,6 @@ public class BlockActor extends AbstractActor {
 
     @Override
     public AbstractActor.Receive createReceive() {
-        return block.getReceive(log, () -> {return getSelf();}, getContext().system());
+        return block.getReceive(log, this::getSelf, getContext().system());
     }
 }

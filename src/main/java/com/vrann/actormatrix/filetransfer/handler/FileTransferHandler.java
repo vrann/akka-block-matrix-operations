@@ -10,11 +10,17 @@ import akka.stream.javadsl.Sink;
 import akka.util.ByteString;
 import com.vrann.actormatrix.FileLocator;
 import com.vrann.actormatrix.cholesky.message.BlockMatrixDataAvailable;
+import com.vrann.actormatrix.cholesky.message.aMNMatrixDataAvailable;
 import com.vrann.actormatrix.filetransfer.message.FileTransfer;
 
 import java.io.File;
 import java.util.concurrent.CompletionStage;
 
+import static com.vrann.actormatrix.cholesky.CholeskyMatrixType.aMN;
+
+/**
+ * Handles files sent by the remote actor
+ */
 public class FileTransferHandler implements SectionMessageHandler<FileTransfer> {
 
     private FileLocator fileLocator;
@@ -67,6 +73,16 @@ public class FileTransferHandler implements SectionMessageHandler<FileTransfer> 
         }
     }
 
+    /**
+     * Handles the actual transfer of the file from the remote actor.
+     *
+     * Remote actor initiates transfer by sending the file back to the sender actor. When sender actor receives the file
+     * it invokes this handler. By default file is always written to disk
+     *
+     * @param message
+     * @param currentSectionId
+     * @param selfReference
+     */
     public void handle(
         FileTransfer message,
         int currentSectionId,
@@ -79,6 +95,7 @@ public class FileTransferHandler implements SectionMessageHandler<FileTransfer> 
         Sink<ByteString, CompletionStage<IOResult>> fileSink = FileIO.toFile(file);
         message.getSourceRef().getSource().runWith(fileSink, materializer);
         log.info("File is written to path {}", file);
+        log.info("Matrix type: {}", message.getMatrixType());
 
         BlockMatrixDataAvailable resultMessage = new BlockMatrixDataAvailable.Builder()
                 .setBlockMatrixType(message.getMatrixType())
@@ -86,7 +103,8 @@ public class FileTransferHandler implements SectionMessageHandler<FileTransfer> 
                 .setPosition(message.getPosition())
                 .setSectionId(currentSectionId)
                 .build();
-        log.info("Notification about available file is sent {}", resultMessage);
+
+        log.info("Matrix data is written to file. Notification about available file is sent {}", resultMessage.getTopic());
         mediator.tell(new DistributedPubSubMediator.Publish(resultMessage.getTopic(), resultMessage), selfReference);
     }
 
